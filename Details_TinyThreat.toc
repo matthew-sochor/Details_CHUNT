@@ -1,0 +1,10 @@
+## Interface: 11303
+## Title: Details!: C.H.U.N.T. (plugin)
+## Notes: C.H.U.N.T. plugin, show Comprehensive Healing Understanding Numerous Tradeoffs for group members in the window. Select it from the Plugin menu in the Orange Cogwheel.
+## RequiredDeps: Details
+## OptionalDeps: Ace3
+
+enUS.lua
+ptBR.lua
+
+Details_TinyThreat.lua
