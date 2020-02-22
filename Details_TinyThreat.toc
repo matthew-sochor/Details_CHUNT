@@ -7,4 +7,4 @@
 enUS.lua
 ptBR.lua
 
-Details_TinyThreat.lua
+Details_CHUNT.lua
