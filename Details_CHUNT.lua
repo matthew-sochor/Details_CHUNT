@@ -1,5 +1,5 @@
 local AceLocale = LibStub ("AceLocale-3.0")
-local Loc = AceLocale:GetLocale ("Details_Threat")
+local Loc = AceLocale:GetLocale ("Details_CHUNT")
 
 local _GetNumSubgroupMembers = GetNumSubgroupMembers --> wow api
 local _GetNumGroupMembers = GetNumGroupMembers --> wow api
@@ -41,18 +41,18 @@ local _math_abs = math.abs
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 --> Create the plugin Object
-local ThreatMeter = _detalhes:NewPluginObject ("Details_TinyThreat")
+local ThreatMeter = _detalhes:NewPluginObject ("Details_CHUNT")
 --> Main Frame
 local ThreatMeterFrame = ThreatMeter.Frame
 
-ThreatMeter:SetPluginDescription ("Small tool for track the threat you and other raid members have in your current target.")
+ThreatMeter:SetPluginDescription ("Small tool for track the C.H.U.N.T. score for you and other healers in your raid.")
 
 --threat stuff from: https://github.com/EsreverWoW/ClassicThreatMeter by EsreverWoW
 --EsreverWoW is MIA at the moment
 --local ThreatLib = LibStub:GetLibrary ("ThreatClassic-1.0")
 
---threat stuff from: https://github.com/dfherr/LibThreatClassic2 by dfherr
-local ThreatLib = LibStub:GetLibrary("LibThreatClassic2")
+--threat stuff from: https://github.com/dfherr/LibChunt by dfherr
+local ThreatLib = LibStub:GetLibrary("LibChunt")
 
 local _UnitThreatSituation = function (unit, mob)
     return ThreatLib:UnitThreatSituation (unit, mob)
@@ -219,7 +219,7 @@ local function CreatePluginFrames (data)
 		local windowInstance = ThreatMeter:GetPluginInstance()
 		if (windowInstance and windowInstance.menu_attribute_string) then
 			if (not newTitle) then
-				windowInstance.menu_attribute_string.text = "Tiny Threat"
+				windowInstance.menu_attribute_string.text = "C.H.U.N.T."
 
 			else
 				--windowInstance.menu_attribute_string.text = newTitle
@@ -799,7 +799,7 @@ end
 
 local build_options_panel = function()
 
-	local options_frame = ThreatMeter:CreatePluginOptionsFrame ("ThreatMeterOptionsWindow", "Tiny Threat Options", 1)
+	local options_frame = ThreatMeter:CreatePluginOptionsFrame ("ThreatMeterOptionsWindow", "C.H.U.N.T. Options", 1)
 
 	local menu = {
 		{
@@ -867,7 +867,7 @@ function ThreatMeter:OnEvent (_, event, ...)
 	
 	elseif (event == "ADDON_LOADED") then
 		local AddonName = select (1, ...)
-		if (AddonName == "Details_TinyThreat") then
+		if (AddonName == "Details_CHUNT") then
 			
 			if (_G._detalhes) then
 
@@ -877,7 +877,7 @@ function ThreatMeter:OnEvent (_, event, ...)
 				local MINIMAL_DETAILS_VERSION_REQUIRED = 1
 				
 				--> Install
-				local install, saveddata = _G._detalhes:InstallPlugin ("RAID", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ThreatMeter, "DETAILS_PLUGIN_TINY_THREAT", MINIMAL_DETAILS_VERSION_REQUIRED, "Details! Team", "v1.07")
+				local install, saveddata = _G._detalhes:InstallPlugin ("SOLO", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ThreatMeter, "DETAILS_PLUGIN_TINY_THREAT", MINIMAL_DETAILS_VERSION_REQUIRED, "Chunt", "v1.0.0")
 				if (type (install) == "table" and install.error) then
 					print (install.error)
 				end
@@ -911,7 +911,7 @@ function ThreatMeter:OnEvent (_, event, ...)
 				--ThreatMeter.saveddata.animate = true
 				
 				--> Register slash commands
-				SLASH_DETAILS_TINYTHREAT1, SLASH_DETAILS_TINYTHREAT2 = "/tinythreat", "/tt"
+				SLASH_DETAILS_TINYTHREAT1, SLASH_DETAILS_TINYTHREAT2 = "/tinythreat", "/chunt"
 				
 				function SlashCmdList.DETAILS_TINYTHREAT (msg, editbox)
 				
