@@ -3,6 +3,7 @@
 ## Notes: C.H.U.N.T. plugin, show Comprehensive Healing Understanding Numerous Tradeoffs for group members in the window. Select it from the Plugin menu in the Orange Cogwheel.
 ## RequiredDeps: Details
 ## OptionalDeps: Ace3
+Libs\libs.xml
 
 enUS.lua
 ptBR.lua
