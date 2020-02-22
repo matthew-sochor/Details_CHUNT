@@ -858,12 +858,10 @@ function ThreatMeter:OnEvent (_, event, ...)
 	elseif (event == "PLAYER_REGEN_DISABLED") then
 		ThreatMeter.Actived = true
 		ThreatMeter:Start()
-		--print ("tiny theat: regen disabled")
 		
 	elseif (event == "PLAYER_REGEN_ENABLED") then
 		ThreatMeter:End()
 		ThreatMeter.Actived = false
-		--print ("tiny theat: regen enabled")
 	
 	elseif (event == "ADDON_LOADED") then
 		local AddonName = select (1, ...)
@@ -877,7 +875,7 @@ function ThreatMeter:OnEvent (_, event, ...)
 				local MINIMAL_DETAILS_VERSION_REQUIRED = 1
 				
 				--> Install
-				local install, saveddata = _G._detalhes:InstallPlugin ("SOLO", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ThreatMeter, "DETAILS_PLUGIN_TINY_THREAT", MINIMAL_DETAILS_VERSION_REQUIRED, "Chunt", "v1.0.0")
+				local install, saveddata = _G._detalhes:InstallPlugin ("SOLO", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ThreatMeter, "DETAILS_PLUGIN_CHUNT", MINIMAL_DETAILS_VERSION_REQUIRED, "Chunt", "v1.0.0")
 				if (type (install) == "table" and install.error) then
 					print (install.error)
 				end
@@ -911,9 +909,9 @@ function ThreatMeter:OnEvent (_, event, ...)
 				--ThreatMeter.saveddata.animate = true
 				
 				--> Register slash commands
-				SLASH_DETAILS_TINYTHREAT1, SLASH_DETAILS_TINYTHREAT2 = "/tinythreat", "/chunt"
+				SLASH_DETAILS_CHUNT1, SLASH_DETAILS_CHUNT2 = "/chuntttttt", "/chunt"
 				
-				function SlashCmdList.DETAILS_TINYTHREAT (msg, editbox)
+				function SlashCmdList.DETAILS_CHUNT (msg, editbox)
 				
 					local command, rest = msg:match("^(%S*)%s*(.-)$")
 					
@@ -941,7 +939,7 @@ function ThreatMeter:OnEvent (_, event, ...)
 					
 					else
 						ThreatMeter:Msg (Loc ["STRING_COMMAND_LIST"])
-						print ("|cffffaeae/tinythreat " .. Loc ["STRING_SLASH_SPEED"] .. "|r: " .. Loc ["STRING_SLASH_SPEED_DESC"])
+						print ("|cffffaeae/chunt " .. Loc ["STRING_SLASH_SPEED"] .. "|r: " .. Loc ["STRING_SLASH_SPEED_DESC"])
 					
 					end
 				end
