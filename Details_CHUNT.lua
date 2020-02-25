@@ -47,12 +47,6 @@ local ChuntMeterFrame = ChuntMeter.Frame
 
 ChuntMeter:SetPluginDescription ("Small tool for track the C.H.U.N.T. score for you and other healers in your raid.")
 
-
-local CheckStatus = function(...)
-	--print (...)
-end
-
-
 local _
 
 local function CreatePluginFrames (data)
@@ -803,7 +797,7 @@ function ChuntMeter:OnEvent (_, event, ...)
 				local MINIMAL_DETAILS_VERSION_REQUIRED = 1
 				
 				--> Install
-				local install, saveddata = _G._detalhes:InstallPlugin ("SOLO", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ChuntMeter, "DETAILS_PLUGIN_CHUNT", MINIMAL_DETAILS_VERSION_REQUIRED, "Chunt", "v1.0.0")
+				local install, saveddata = _G._detalhes:InstallPlugin ("RAID", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ChuntMeter, "DETAILS_PLUGIN_CHUNT", MINIMAL_DETAILS_VERSION_REQUIRED, "Chunt", "v1.0.0")
 				if (type (install) == "table" and install.error) then
 					print (install.error)
 				end
