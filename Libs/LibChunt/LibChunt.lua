@@ -1667,6 +1667,67 @@ function ThreatLib:UnitDetailedThreatSituation(unit, target)
 	return isTanking, threatStatus, threatPercent, rawThreatPercent, threatValue
 end
 
+function ThreatLib:UnitDetailedHealingSituation(unit, target)
+	local isTanking, threatStatus, threatPercent, rawThreatPercent, threatValue = nil, 0, nil, nil, 0
+	if not UnitExists(unit) or not UnitExists(target) then
+		return isTanking, threatStatus, threatPercent, rawThreatPercent, threatValue
+	end
+
+	local unitGUID, targetGUID = UnitGUID(unit), UnitGUID(target)
+	local threatValue = self:GetThreat(unitGUID, targetGUID) or 0
+	if threatValue == 0 then
+		return isTanking, threatStatus, threatPercent, rawThreatPercent, threatValue
+	end
+
+	local targetTarget = target .. "target"
+	local targetTargetGUID = UnitGUID(targetTarget)
+	local targetTargetVal = self:GetThreat(unitGUID, targetTargetGUID) or 0
+
+	local isPlayer
+	if unit == "player" then isPlayer = true end
+	local class = select(2, UnitClass(unit))
+
+	local aggroMod = 1.3
+	if isPlayer and self:UnitInMeleeRange(targetGUID) or (not isPlayer and (class == "ROGUE" or class == "WARRIOR")) or (strsplit("-", unitGUID) == "Pet" and class ~= "MAGE") then
+		aggroMod = 1.1
+	end
+
+	local maxVal, maxGUID = self:GetMaxThreatOnTarget(targetGUID)
+
+	local aggroVal = 0
+	if targetTargetVal >= maxVal / aggroMod then
+		aggroVal = targetTargetVal
+	else
+		aggroVal = maxVal
+	end
+
+	local hasTarget = UnitExists(target .. "target")
+
+	if threatValue >= aggroVal then
+		if UnitIsUnit(unit, targetTarget) then
+			isTanking = 1
+			if unitGUID == maxGUID then
+				threatStatus = 3
+			else
+				threatStatus = 2
+			end
+		else
+			threatStatus = 1
+		end
+	end
+
+	rawThreatPercent = threatValue / aggroVal * 100
+
+	if isTanking or (not hasTarget and threatStatus ~= 0 ) then
+		threatPercent = 100
+	else
+		threatPercent = rawThreatPercent / aggroMod
+	end
+
+	threatValue = floor(threatValue)
+
+	return isTanking, threatStatus, threatPercent, rawThreatPercent, threatValue
+end
 ------------------------------------------------------------------------
 -- :UnitThreatSituation("unit", "mob")
 -- Arguments: 

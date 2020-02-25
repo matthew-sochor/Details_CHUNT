@@ -41,25 +41,20 @@ local _math_abs = math.abs
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 --> Create the plugin Object
-local ThreatMeter = _detalhes:NewPluginObject ("Details_CHUNT")
+local ChuntMeter = _detalhes:NewPluginObject ("Details_CHUNT")
 --> Main Frame
-local ThreatMeterFrame = ThreatMeter.Frame
+local ChuntMeterFrame = ChuntMeter.Frame
 
-ThreatMeter:SetPluginDescription ("Small tool for track the C.H.U.N.T. score for you and other healers in your raid.")
+ChuntMeter:SetPluginDescription ("Small tool for track the C.H.U.N.T. score for you and other healers in your raid.")
 
---threat stuff from: https://github.com/EsreverWoW/ClassicThreatMeter by EsreverWoW
---EsreverWoW is MIA at the moment
---local ThreatLib = LibStub:GetLibrary ("ThreatClassic-1.0")
-
---threat stuff from: https://github.com/dfherr/LibChunt by dfherr
-local ThreatLib = LibStub:GetLibrary("LibChunt")
+local ChuntLib = LibStub:GetLibrary("LibChunt")
 
 local _UnitThreatSituation = function (unit, mob)
-    return ThreatLib:UnitThreatSituation (unit, mob)
+    return ChuntLib:UnitThreatSituation (unit, mob)
 end
 
 local _UnitDetailedThreatSituation = function (unit, mob)
-    return ThreatLib:UnitDetailedThreatSituation (unit, mob)
+    return ChuntLib:UnitDetailedThreatSituation (unit, mob)
 end
 
 --[=
@@ -67,10 +62,10 @@ end
 		--print (...)
 	end
 
-	ThreatLib:RegisterCallback("Activate", CheckStatus)
-    ThreatLib:RegisterCallback("Deactivate", CheckStatus)
-    ThreatLib:RegisterCallback("ThreatUpdated", CheckStatus)
-    ThreatLib:RequestActiveOnSolo (true)
+	ChuntLib:RegisterCallback("Activate", CheckStatus)
+    ChuntLib:RegisterCallback("Deactivate", CheckStatus)
+    ChuntLib:RegisterCallback("ThreatUpdated", CheckStatus)
+    ChuntLib:RequestActiveOnSolo (true)
 --]=]
 
 local _
@@ -82,123 +77,123 @@ local function CreatePluginFrames (data)
 	local DetailsFrameWork = _detalhes.gump
 
 	--> data
-	ThreatMeter.data = data or {}
+	ChuntMeter.data = data or {}
 	
 	--> defaults
-	ThreatMeter.RowWidth = 294
-	ThreatMeter.RowHeight = 14
+	ChuntMeter.RowWidth = 294
+	ChuntMeter.RowHeight = 14
 	--> amount of row wich can be displayed
-	ThreatMeter.CanShow = 0
+	ChuntMeter.CanShow = 0
 	--> all rows already created
-	ThreatMeter.Rows = {}
+	ChuntMeter.Rows = {}
 	--> current shown rows
-	ThreatMeter.ShownRows = {}
+	ChuntMeter.ShownRows = {}
 	-->
-	ThreatMeter.Actived = false
+	ChuntMeter.Actived = false
 	
 	--> localize functions
-	ThreatMeter.percent_color = ThreatMeter.percent_color
+	ChuntMeter.percent_color = ChuntMeter.percent_color
 	
-	ThreatMeter.GetOnlyName = ThreatMeter.GetOnlyName
+	ChuntMeter.GetOnlyName = ChuntMeter.GetOnlyName
 	
 	--> window reference
 	local instance
 	local player
 	
 	--> OnEvent Table
-	function ThreatMeter:OnDetailsEvent (event, ...)
+	function ChuntMeter:OnDetailsEvent (event, ...)
 	
 		if (event == "DETAILS_STARTED") then
-			ThreatMeter:RefreshRows()
+			ChuntMeter:RefreshRows()
 			
 		elseif (event == "HIDE") then --> plugin hidded, disabled
-			ThreatMeter.Actived = false
-			ThreatMeter:Cancel()
+			ChuntMeter.Actived = false
+			ChuntMeter:Cancel()
 		
 		elseif (event == "SHOW") then
 		
-			instance = ThreatMeter:GetInstance (ThreatMeter.instance_id)
+			instance = ChuntMeter:GetInstance (ChuntMeter.instance_id)
 			
-			ThreatMeter.RowWidth = instance.baseframe:GetWidth()-6
+			ChuntMeter.RowWidth = instance.baseframe:GetWidth()-6
 			
-			ThreatMeter:UpdateContainers()
-			ThreatMeter:UpdateRows()
+			ChuntMeter:UpdateContainers()
+			ChuntMeter:UpdateRows()
 			
-			ThreatMeter:SizeChanged()
+			ChuntMeter:SizeChanged()
 			
 			player = GetUnitName ("player", true)
 			
-			ThreatMeter.Actived = false
+			ChuntMeter.Actived = false
 
-			if (ThreatMeter:IsInCombat() or UnitAffectingCombat ("player")) then
-				if (not ThreatMeter.initialized) then
+			if (ChuntMeter:IsInCombat() or UnitAffectingCombat ("player")) then
+				if (not ChuntMeter.initialized) then
 					return
 				end
-				ThreatMeter.Actived = true
-				ThreatMeter:Start()
+				ChuntMeter.Actived = true
+				ChuntMeter:Start()
 			end
 		
 		elseif (event == "COMBAT_PLAYER_ENTER") then
-			if (not ThreatMeter.Actived) then
-				ThreatMeter.Actived = true
-				ThreatMeter:Start()
+			if (not ChuntMeter.Actived) then
+				ChuntMeter.Actived = true
+				ChuntMeter:Start()
 			end
 		
 		elseif (event == "DETAILS_INSTANCE_ENDRESIZE" or event == "DETAILS_INSTANCE_SIZECHANGED") then
 		
 			local what_window = select (1, ...)
 			if (what_window == instance) then
-				ThreatMeter:SizeChanged()
-				ThreatMeter:RefreshRows()
+				ChuntMeter:SizeChanged()
+				ChuntMeter:RefreshRows()
 			end
 			
 		elseif (event == "DETAILS_OPTIONS_MODIFIED") then
 			local what_window = select (1, ...)
 			if (what_window == instance) then
-				ThreatMeter:RefreshRows()
+				ChuntMeter:RefreshRows()
 			end
 		
 		elseif (event == "DETAILS_INSTANCE_STARTSTRETCH") then
-			ThreatMeterFrame:SetFrameStrata ("TOOLTIP")
-			ThreatMeterFrame:SetFrameLevel (instance.baseframe:GetFrameLevel()+1)
+			ChuntMeterFrame:SetFrameStrata ("TOOLTIP")
+			ChuntMeterFrame:SetFrameLevel (instance.baseframe:GetFrameLevel()+1)
 		
 		elseif (event == "DETAILS_INSTANCE_ENDSTRETCH") then
-			ThreatMeterFrame:SetFrameStrata ("MEDIUM")
+			ChuntMeterFrame:SetFrameStrata ("MEDIUM")
 			
 		elseif (event == "PLUGIN_DISABLED") then
-			ThreatMeterFrame:UnregisterEvent ("PLAYER_TARGET_CHANGED")
-			ThreatMeterFrame:UnregisterEvent ("PLAYER_REGEN_DISABLED")
-			ThreatMeterFrame:UnregisterEvent ("PLAYER_REGEN_ENABLED")
+			ChuntMeterFrame:UnregisterEvent ("PLAYER_TARGET_CHANGED")
+			ChuntMeterFrame:UnregisterEvent ("PLAYER_REGEN_DISABLED")
+			ChuntMeterFrame:UnregisterEvent ("PLAYER_REGEN_ENABLED")
 				
 		elseif (event == "PLUGIN_ENABLED") then
-			ThreatMeterFrame:RegisterEvent ("PLAYER_TARGET_CHANGED")
-			ThreatMeterFrame:RegisterEvent ("PLAYER_REGEN_DISABLED")
-			ThreatMeterFrame:RegisterEvent ("PLAYER_REGEN_ENABLED")
+			ChuntMeterFrame:RegisterEvent ("PLAYER_TARGET_CHANGED")
+			ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_DISABLED")
+			ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_ENABLED")
 		end
 	end
 	
-	ThreatMeterFrame:SetWidth (300)
-	ThreatMeterFrame:SetHeight (100)
+	ChuntMeterFrame:SetWidth (300)
+	ChuntMeterFrame:SetHeight (100)
 	
-	function ThreatMeter:UpdateContainers()
-		for _, row in _ipairs (ThreatMeter.Rows) do 
+	function ChuntMeter:UpdateContainers()
+		for _, row in _ipairs (ChuntMeter.Rows) do 
 			row:SetContainer (instance.baseframe)
 		end
 	end
 	
-	function ThreatMeter:UpdateRows()
-		for _, row in _ipairs (ThreatMeter.Rows) do
-			row.width = ThreatMeter.RowWidth
+	function ChuntMeter:UpdateRows()
+		for _, row in _ipairs (ChuntMeter.Rows) do
+			row.width = ChuntMeter.RowWidth
 		end
 	end
 	
-	function ThreatMeter:HideBars()
-		for _, row in _ipairs (ThreatMeter.Rows) do 
+	function ChuntMeter:HideBars()
+		for _, row in _ipairs (ChuntMeter.Rows) do 
 			row:Hide()
 		end
 	end
 
-	function ThreatMeter:GetNameOrder (playerName)
+	function ChuntMeter:GetNameOrder (playerName)
 		local name = string.upper (playerName .. "zz")
 		local byte1 = math.abs (string.byte (name, 2)-91)/1000000
 		return byte1 + math.abs (string.byte (name, 1)-91)/10000
@@ -215,8 +210,8 @@ local function CreatePluginFrames (data)
 		["NONE"] = {0.3125, 0.59375, 0.328125, 0.625}
 	}
 
-	function ThreatMeter.UpdateWindowTitle (newTitle)
-		local windowInstance = ThreatMeter:GetPluginInstance()
+	function ChuntMeter.UpdateWindowTitle (newTitle)
+		local windowInstance = ChuntMeter:GetPluginInstance()
 		if (windowInstance and windowInstance.menu_attribute_string) then
 			if (not newTitle) then
 				windowInstance.menu_attribute_string.text = "C.H.U.N.T."
@@ -229,7 +224,7 @@ local function CreatePluginFrames (data)
 	end
 	
 	--> animation with acceleration ~animation ~healthbaranimation
-	function ThreatMeter.AnimateLeftWithAccel (self, deltaTime)
+	function ChuntMeter.AnimateLeftWithAccel (self, deltaTime)
 		local distance = (self.AnimationStart - self.AnimationEnd) / self.CurrentPercentMax * 100	--scale 1 - 100
 		local minTravel = min (distance / 10, 3) -- 10 = trigger distance to max speed 3 = speed scale on max travel
 		local maxTravel = max (minTravel, 0.45) -- 0.45 = min scale speed on low travel speed
@@ -254,7 +249,7 @@ local function CreatePluginFrames (data)
 		end
 	end
 
-	function ThreatMeter.AnimateRightWithAccel (self, deltaTime)
+	function ChuntMeter.AnimateRightWithAccel (self, deltaTime)
 		local distance = (self.AnimationEnd - self.AnimationStart) / self.CurrentPercentMax * 100	--scale 1 - 100 basis
 		local minTravel = math.min (distance / 10, 3) -- 10 = trigger distance to max speed 3 = speed scale on max travel
 		local maxTravel = math.max (minTravel, 0.45) -- 0.45 = min scale speed on low travel speed
@@ -271,42 +266,42 @@ local function CreatePluginFrames (data)
 		end
 	end
 
-	function ThreatMeter:SizeChanged()
+	function ChuntMeter:SizeChanged()
 
-		local instance = ThreatMeter:GetPluginInstance()
+		local instance = ChuntMeter:GetPluginInstance()
 	
 		local w, h = instance.baseframe:GetSize()
-		ThreatMeterFrame:SetWidth (w)
-		ThreatMeterFrame:SetHeight (h)
+		ChuntMeterFrame:SetWidth (w)
+		ChuntMeterFrame:SetHeight (h)
 		
 		local rowHeight = instance and instance.row_info.height or 20
 
-		ThreatMeter.CanShow = math.floor ( h / (rowHeight + 1))
-		for i = #ThreatMeter.Rows+1, ThreatMeter.CanShow do
-			ThreatMeter:NewRow (i)
+		ChuntMeter.CanShow = math.floor ( h / (rowHeight + 1))
+		for i = #ChuntMeter.Rows+1, ChuntMeter.CanShow do
+			ChuntMeter:NewRow (i)
 		end
 
-		ThreatMeter.ShownRows = {}
+		ChuntMeter.ShownRows = {}
 		
-		for i = 1, ThreatMeter.CanShow do
-			ThreatMeter.ShownRows [#ThreatMeter.ShownRows + 1] = ThreatMeter.Rows[i]
+		for i = 1, ChuntMeter.CanShow do
+			ChuntMeter.ShownRows [#ChuntMeter.ShownRows + 1] = ChuntMeter.Rows[i]
 			if (_detalhes.in_combat) then
-				ThreatMeter.Rows[i]:Show()
+				ChuntMeter.Rows[i]:Show()
 			end
-			ThreatMeter.Rows[i].width = w - 5
+			ChuntMeter.Rows[i].width = w - 5
 		end
 		
-		for i = #ThreatMeter.ShownRows + 1, #ThreatMeter.Rows do
-			ThreatMeter.Rows [i]:Hide()
+		for i = #ChuntMeter.ShownRows + 1, #ChuntMeter.Rows do
+			ChuntMeter.Rows [i]:Hide()
 		end
 		
 	end
 	
 	local SharedMedia = LibStub:GetLibrary ("LibSharedMedia-3.0")
 
-	function ThreatMeter:RefreshRow (row)
+	function ChuntMeter:RefreshRow (row)
 	
-		local instance = ThreatMeter:GetPluginInstance()
+		local instance = ChuntMeter:GetPluginInstance()
 		
 		if (instance) then
 			local font = SharedMedia:Fetch ("font", instance.row_info.font_face, true) or instance.row_info.font_face
@@ -320,16 +315,16 @@ local function CreatePluginFrames (data)
 			rowHeight = - ( (row.rowId - 1) * (rowHeight + 1) )
 
 			row:ClearAllPoints()
-			row:SetPoint ("topleft", ThreatMeterFrame, "topleft", 1, rowHeight)
-			row:SetPoint ("topright", ThreatMeterFrame, "topright", -1, rowHeight)
+			row:SetPoint ("topleft", ChuntMeterFrame, "topleft", 1, rowHeight)
+			row:SetPoint ("topright", ChuntMeterFrame, "topright", -1, rowHeight)
 
 			--row.width = instance.baseframe:GetWidth()-5
 		end
 	end
 	
-	function ThreatMeter:RefreshRows()
-		for i = 1, #ThreatMeter.Rows do
-			ThreatMeter:RefreshRow (ThreatMeter.Rows [i])
+	function ChuntMeter:RefreshRows()
+		for i = 1, #ChuntMeter.Rows do
+			ChuntMeter:RefreshRow (ChuntMeter.Rows [i])
 		end
 	end
 
@@ -340,12 +335,12 @@ local function CreatePluginFrames (data)
 		end
 	end
 	
-	function ThreatMeter:NewRow (i)
+	function ChuntMeter:NewRow (i)
 
-		local instance = ThreatMeter:GetPluginInstance()
+		local instance = ChuntMeter:GetPluginInstance()
 		local rowHeight = instance and instance.row_info.height or 20
 
-		local newrow = DetailsFrameWork:NewBar (ThreatMeterFrame, nil, "DetailsThreatRow"..i, nil, 300, rowHeight)
+		local newrow = DetailsFrameWork:NewBar (ChuntMeterFrame, nil, "DetailsThreatRow"..i, nil, 300, rowHeight)
 		newrow:SetPoint (3, -((i-1)*(rowHeight+1)))
 		newrow.lefttext = "bar " .. i
 		newrow.color = "skyblue"
@@ -356,9 +351,9 @@ local function CreatePluginFrames (data)
 
 		newrow.widget:SetScript ("OnUpdate", onUpdateRow)
 
-		ThreatMeter.Rows [#ThreatMeter.Rows+1] = newrow
+		ChuntMeter.Rows [#ChuntMeter.Rows+1] = newrow
 		
-		ThreatMeter:RefreshRow (newrow)
+		ChuntMeter:RefreshRow (newrow)
 		
 		newrow:Hide()
 		
@@ -375,22 +370,22 @@ local function CreatePluginFrames (data)
 
 	local Threater = function()
 
-		local options = ThreatMeter.options
+		local options = ChuntMeter.options
 	
-		if (ThreatMeter.Actived and UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
+		if (ChuntMeter.Actived and UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
 
-			ThreatMeter.UpdateWindowTitle (UnitName ("target"))
+			ChuntMeter.UpdateWindowTitle (UnitName ("target"))
 
 			if (_IsInRaid()) then
 				for i = 1, _GetNumGroupMembers(), 1 do
 				
 					local thisplayer_name = GetUnitName ("raid"..i, true)
-					local threat_table_index = ThreatMeter.player_list_hash [thisplayer_name]
-					local threat_table = ThreatMeter.player_list_indexes [threat_table_index]
+					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 				
 					if (not threat_table) then
 						--> some one joined the group while the player are in combat
-						ThreatMeter:Start()
+						ChuntMeter:Start()
 						return
 					end
 				
@@ -411,24 +406,23 @@ local function CreatePluginFrames (data)
 					end
 
 				end
-				
 			elseif (_IsInGroup()) then
 				for i = 1, _GetNumGroupMembers()-1, 1 do
 					local thisplayer_name = GetUnitName ("party"..i, true)
-					local threat_table_index = ThreatMeter.player_list_hash [thisplayer_name]
-					local threat_table = ThreatMeter.player_list_indexes [threat_table_index]
+					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 				
 					if (not threat_table) then
 						--> some one joined the group while the player are in combat
-						ThreatMeter:Start()
+						ChuntMeter:Start()
 						return
 					end
 				
-					local isTanking, status, threatpct, rawthreatpct, threatvalue = ThreatLib:UnitDetailedThreatSituation ("party"..i, "target")
+					local isTanking, status, threatpct, rawthreatpct, threatvalue = ChuntLib:UnitDetailedThreatSituation ("party"..i, "target")
 					--returns nil, 0, nil, nil, 0
 					--	print (isTanking, status, threatpct, rawthreatpct, threatvalue)
 
-					local nameOrder = ThreatMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
+					local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
 
 					isTanking = isTanking or false
 					threatpct = threatpct or 0
@@ -446,9 +440,9 @@ local function CreatePluginFrames (data)
 				end
 				
 				local thisplayer_name = GetUnitName ("player", true)
-				local threat_table_index = ThreatMeter.player_list_hash [thisplayer_name]
-				local threat_table = ThreatMeter.player_list_indexes [threat_table_index]
-				local nameOrder = ThreatMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
+				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
+				local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
 
 				local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("player", "target")
 
@@ -470,8 +464,8 @@ local function CreatePluginFrames (data)
 				--> pet
 				if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
 					local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
-					local threat_table_index = ThreatMeter.player_list_hash [thisplayer_name]
-					local threat_table = ThreatMeter.player_list_indexes [threat_table_index]
+					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 
 					if (threat_table) then
 
@@ -492,17 +486,17 @@ local function CreatePluginFrames (data)
 						end
 					end
 				end
-				
 			else
 			
 				--> player
 				local thisplayer_name = GetUnitName ("player", true)
-				local threat_table_index = ThreatMeter.player_list_hash [thisplayer_name]
-				local threat_table = ThreatMeter.player_list_indexes [threat_table_index]
+				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 				local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("player", "target")
 
-				local nameOrder = ThreatMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
-
+				local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
+				--local player_heal = Details:GetActor (segmentID = _G.DETAILS_SEGMENTID_CURRENT, attributeID = _G.DETAILS_ATTRIBUTE_HEAL, thisplayer_name)
+				
 				--threatpct, rawthreatpct are nil on single player
 				threatpct = threatpct or 0
 				rawthreatpct = rawthreatpct or (0 + nameOrder)
@@ -526,8 +520,8 @@ local function CreatePluginFrames (data)
 				--> pet
 				if (UnitExists ("pet")) then
 					local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
-					local threat_table_index = ThreatMeter.player_list_hash [thisplayer_name]
-					local threat_table = ThreatMeter.player_list_indexes [threat_table_index]
+					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 
 					if (threat_table) then
 
@@ -551,38 +545,49 @@ local function CreatePluginFrames (data)
 			end
 			
 			--> sort
-			_table_sort (ThreatMeter.player_list_indexes, sort)
-			for index, t in _ipairs (ThreatMeter.player_list_indexes) do
-				ThreatMeter.player_list_hash [t[1]] = index
+			_table_sort (ChuntMeter.player_list_indexes, sort)
+			for index, t in _ipairs (ChuntMeter.player_list_indexes) do
+				ChuntMeter.player_list_hash [t[1]] = index
 			end
 			
 			--> no threat on this enemy
-			if (ThreatMeter.player_list_indexes [1] [2] < 1) then
-				ThreatMeter:HideBars()
+			if (ChuntMeter.player_list_indexes [1] [2] < 1) then
+				ChuntMeter:HideBars()
 				return
 			end
 			
 			local lastIndex = 0
 			local shownMe = false
 			
-			local pullRow = ThreatMeter.ShownRows [1]
-			local me = ThreatMeter.player_list_indexes [ ThreatMeter.player_list_hash [player] ]
+			local pullRow = ChuntMeter.ShownRows [1]
+			local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
 			if (me) then
 			
 				local myThreat = me [6] or 0
 				local myRole = me [4]
 				
-				local topThreat = ThreatMeter.player_list_indexes [1]
+				local topThreat = ChuntMeter.player_list_indexes [1]
 				local aggro = topThreat [6] * (CheckInteractDistance ("target", 3) and 1.1 or 1.3)
-				
-				pullRow:SetLeftText ("Pull Aggro At")
+				local combat = Details:GetCurrentCombat()
+				local combat_time = combat:GetCombatTime()
+				local player = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
+
+				local totalHeal = player.total
+				local totalOverHeal = player.totalover
+				local _player_targets = ""
+				--for k, v in ipairs(player.spells) do
+				--	_player_targets = _player_targets .. "hi" -- .. k .. ":" .. v .. "; "
+				--end
+				--message(combat_time)
+				pullRow:SetLeftText ("hi iggy")
 				local realPercent = _math_floor (aggro / max (topThreat [6], 0.01) * 100)
-				pullRow:SetRightText ("+" .. ThreatMeter:ToK2 (aggro - myThreat) .. " (" .. _math_floor (_math_abs ((myThreat / aggro * 100) - realPercent)) .. "%)") --
+				pullRow:SetRightText ("Total: " .. totalHeal .. " Overheal: " .. totalOverHeal) --
+				--pullRow.SetRightText(_player_targets)
 				pullRow:SetValue (100)
 				
 				local myPercentToAggro = myThreat / aggro * 100
 				
-				local r, g = ThreatMeter:percent_color (myPercentToAggro)
+				local r, g = ChuntMeter:percent_color (myPercentToAggro)
 				--local r, g = myPercentToAggro / 100, (100-myPercentToAggro) / 100
 				pullRow:SetColor (r, g, 0)
 				pullRow._icon:SetTexture ([[Interface\PVPFrame\Icon-Combat]])
@@ -596,20 +601,22 @@ local function CreatePluginFrames (data)
 				end
 			end
 			
-			for index = 2, #ThreatMeter.ShownRows do
-				local thisRow = ThreatMeter.ShownRows [index]
-				local threat_actor = ThreatMeter.player_list_indexes [index-1]
+			for index = 2, #ChuntMeter.ShownRows do
+				local thisRow = ChuntMeter.ShownRows [index]
+				local threat_actor = ChuntMeter.player_list_indexes [index-1]
 				
 				if (threat_actor) then
 					local role = threat_actor [4]
 					thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
 					
-					thisRow:SetLeftText (ThreatMeter:GetOnlyName (threat_actor [1]))
+					local targetHealth = UnitHealth("player")
+					local targetHealthMax = UnitHealthMax("player")
+					thisRow:SetLeftText (ChuntMeter:GetOnlyName (threat_actor [1]))
 					
 					local oldPct = thisRow:GetValue() or 0
 					local pct = threat_actor [2]
 					
-					thisRow:SetRightText (ThreatMeter:ToK2 (threat_actor [6]) .. " (" .. _cstr ("%.1f", pct) .. "%)")
+					thisRow:SetRightText ("Chunt: " .. targetHealth .. "/" .. targetHealthMax)
 
 					--do healthbar animation ~animation ~healthbar
 						thisRow.CurrentPercentMax = 100
@@ -621,9 +628,9 @@ local function CreatePluginFrames (data)
 						thisRow.IsAnimating = true
 						
 						if (thisRow.AnimationEnd > thisRow.AnimationStart) then
-							thisRow.AnimateFunc = ThreatMeter.AnimateRightWithAccel
+							thisRow.AnimateFunc = ChuntMeter.AnimateRightWithAccel
 						else
-							thisRow.AnimateFunc = ThreatMeter.AnimateLeftWithAccel
+							thisRow.AnimateFunc = ChuntMeter.AnimateLeftWithAccel
 						end
 
 					--if no animations
@@ -643,7 +650,7 @@ local function CreatePluginFrames (data)
 						if (index == 2) then
 							thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
 						else
-							local r, g = ThreatMeter:percent_color (pct, true)
+							local r, g = ChuntMeter:percent_color (pct, true)
 							thisRow:SetColor (r, g, 0, 1)
 						end
 					end
@@ -661,21 +668,21 @@ local function CreatePluginFrames (data)
 			
 			if (not shownMe) then
 				--> show my self into last bar
-				local threat_actor = ThreatMeter.player_list_indexes [ ThreatMeter.player_list_hash [player] ]
+				local threat_actor = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
 				if (threat_actor) then
 					if (threat_actor [2] and threat_actor [2] > 0.1) then
-						local thisRow = ThreatMeter.ShownRows [#ThreatMeter.ShownRows]
+						local thisRow = ChuntMeter.ShownRows [#ChuntMeter.ShownRows]
 						thisRow:SetLeftText (player)
 						--thisRow.textleft:SetTextColor (unpack (RAID_CLASS_COLORS [threat_actor [5]]))
 						local role = threat_actor [4]
 						thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
-						thisRow:SetRightText (ThreatMeter:ToK2 (threat_actor [6]) .. " (" .. _cstr ("%.1f", threat_actor [2]) .. "%)")
+						thisRow:SetRightText (ChuntMeter:ToK2 (threat_actor [6]) .. " (" .. _cstr ("%.1f", threat_actor [2]) .. "%)")
 						thisRow:SetValue (threat_actor [2])
 						
 						if (options.useplayercolor) then
 							thisRow:SetColor (_unpack (options.playercolor))
 						else
-							local r, g = ThreatMeter:percent_color (threat_actor [2], true)
+							local r, g = ChuntMeter:percent_color (threat_actor [2], true)
 							thisRow:SetColor (r, g, 0, .3)
 						end
 					end
@@ -688,35 +695,35 @@ local function CreatePluginFrames (data)
 		
 	end
 	
-	function ThreatMeter:TargetChanged()
-		if (not ThreatMeter.Actived) then
+	function ChuntMeter:TargetChanged()
+		if (not ChuntMeter.Actived) then
 			return
 		end
 		local NewTarget = _UnitName ("target")
 		if (NewTarget and not _UnitIsFriend ("player", "target")) then
 			target = NewTarget
-			ThreatMeter.UpdateWindowTitle (NewTarget)
+			ChuntMeter.UpdateWindowTitle (NewTarget)
 			Threater()
 		else
-			ThreatMeter.UpdateWindowTitle (false)
-			ThreatMeter:HideBars()
+			ChuntMeter.UpdateWindowTitle (false)
+			ChuntMeter:HideBars()
 		end
 	end
 	
-	function ThreatMeter:Tick()
+	function ChuntMeter:Tick()
 		Threater()
 	end
 
-	function ThreatMeter:Start()
-		ThreatMeter:HideBars()
-		if (ThreatMeter.Actived) then
-			if (ThreatMeter.job_thread) then
-				ThreatMeter:CancelTimer (ThreatMeter.job_thread)
-				ThreatMeter.job_thread = nil
+	function ChuntMeter:Start()
+		ChuntMeter:HideBars()
+		if (ChuntMeter.Actived) then
+			if (ChuntMeter.job_thread) then
+				ChuntMeter:CancelTimer (ChuntMeter.job_thread)
+				ChuntMeter.job_thread = nil
 			end
 			
-			ThreatMeter.player_list_indexes = {}
-			ThreatMeter.player_list_hash = {}
+			ChuntMeter.player_list_indexes = {}
+			ChuntMeter.player_list_hash = {}
 			
 			--> pre build player list
 			if (_IsInRaid()) then
@@ -725,8 +732,8 @@ local function CreatePluginFrames (data)
 					local role = _UnitGroupRolesAssigned ("raid"..i)
 					local _, class = UnitClass (thisplayer_name)
 					local t = {thisplayer_name, 0, false, role, class, 0}
-					ThreatMeter.player_list_indexes [#ThreatMeter.player_list_indexes+1] = t
-					ThreatMeter.player_list_hash [thisplayer_name] = #ThreatMeter.player_list_indexes
+					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+					ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 				end
 
 				
@@ -737,22 +744,22 @@ local function CreatePluginFrames (data)
 					local role = _UnitGroupRolesAssigned ("party"..i)
 					local _, class = UnitClass (thisplayer_name)
 					local t = {thisplayer_name, 0, false, role, class, 0}
-					ThreatMeter.player_list_indexes [#ThreatMeter.player_list_indexes+1] = t
-					ThreatMeter.player_list_hash [thisplayer_name] = #ThreatMeter.player_list_indexes
+					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+					ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 				end
 				local thisplayer_name = GetUnitName ("player", true)
 				local role = _UnitGroupRolesAssigned ("player")
 				local _, class = UnitClass (thisplayer_name)
 				local t = {thisplayer_name, 0, false, role, class, 0}
-				ThreatMeter.player_list_indexes [#ThreatMeter.player_list_indexes+1] = t
-				ThreatMeter.player_list_hash [thisplayer_name] = #ThreatMeter.player_list_indexes
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 
 				if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
 					local thispet_name = GetUnitName ("pet", true) .. " *PET*"
 					local role = "DAMAGER"
 					local t = {thispet_name, 0, false, role, class, 0}
-					ThreatMeter.player_list_indexes [#ThreatMeter.player_list_indexes+1] = t
-					ThreatMeter.player_list_hash [thispet_name] = #ThreatMeter.player_list_indexes
+					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+					ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
 				end
 				
 			else
@@ -760,52 +767,52 @@ local function CreatePluginFrames (data)
 				local role = _UnitGroupRolesAssigned ("player")
 				local _, class = UnitClass (thisplayer_name)
 				local t = {thisplayer_name, 0, false, role, class, 0}
-				ThreatMeter.player_list_indexes [#ThreatMeter.player_list_indexes+1] = t
-				ThreatMeter.player_list_hash [thisplayer_name] = #ThreatMeter.player_list_indexes
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 				
 				if (UnitExists ("pet")) then
 					local thispet_name = GetUnitName ("pet", true) .. " *PET*"
 					local role = "DAMAGER"
 					local t = {thispet_name, 0, false, role, class, 0}
-					ThreatMeter.player_list_indexes [#ThreatMeter.player_list_indexes+1] = t
-					ThreatMeter.player_list_hash [thispet_name] = #ThreatMeter.player_list_indexes
+					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+					ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
 				end
 			end
 			
-			local job_thread = ThreatMeter:ScheduleRepeatingTimer ("Tick", ThreatMeter.options.updatespeed)
-			ThreatMeter.job_thread = job_thread
+			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
+			ChuntMeter.job_thread = job_thread
 		end
 	end
 	
-	function ThreatMeter:End()
-		ThreatMeter:HideBars()
-		if (ThreatMeter.job_thread) then
-			ThreatMeter:CancelTimer (ThreatMeter.job_thread)
-			ThreatMeter.job_thread = nil
-			ThreatMeter.UpdateWindowTitle (false)
+	function ChuntMeter:End()
+		ChuntMeter:HideBars()
+		if (ChuntMeter.job_thread) then
+			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
+			ChuntMeter.job_thread = nil
+			ChuntMeter.UpdateWindowTitle (false)
 		end
 	end
 	
-	function ThreatMeter:Cancel()
-		ThreatMeter:HideBars()
-		if (ThreatMeter.job_thread) then
-			ThreatMeter:CancelTimer (ThreatMeter.job_thread)
-			ThreatMeter.job_thread = nil
+	function ChuntMeter:Cancel()
+		ChuntMeter:HideBars()
+		if (ChuntMeter.job_thread) then
+			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
+			ChuntMeter.job_thread = nil
 		end
-		ThreatMeter.Actived = false
+		ChuntMeter.Actived = false
 	end
 	
 end
 
 local build_options_panel = function()
 
-	local options_frame = ThreatMeter:CreatePluginOptionsFrame ("ThreatMeterOptionsWindow", "C.H.U.N.T. Options", 1)
+	local options_frame = ChuntMeter:CreatePluginOptionsFrame ("ChuntMeterOptionsWindow", "C.H.U.N.T. Options", 1)
 
 	local menu = {
 		{
 			type = "range",
-			get = function() return ThreatMeter.saveddata.updatespeed end,
-			set = function (self, fixedparam, value) ThreatMeter.saveddata.updatespeed = value end,
+			get = function() return ChuntMeter.saveddata.updatespeed end,
+			set = function (self, fixedparam, value) ChuntMeter.saveddata.updatespeed = value end,
 			min = 0.2,
 			max = 3,
 			step = 0.2,
@@ -815,16 +822,16 @@ local build_options_panel = function()
 		},
 		{
 			type = "toggle",
-			get = function() return ThreatMeter.saveddata.useplayercolor end,
-			set = function (self, fixedparam, value) ThreatMeter.saveddata.useplayercolor = value end,
+			get = function() return ChuntMeter.saveddata.useplayercolor end,
+			set = function (self, fixedparam, value) ChuntMeter.saveddata.useplayercolor = value end,
 			desc = "When enabled, your bar get the following color.",
 			name = "Player Color Enabled"
 		},
 		{
 			type = "color",
-			get = function() return ThreatMeter.saveddata.playercolor end,
+			get = function() return ChuntMeter.saveddata.playercolor end,
 			set = function (self, r, g, b, a) 
-				local current = ThreatMeter.saveddata.playercolor
+				local current = ChuntMeter.saveddata.playercolor
 				current[1], current[2], current[3], current[4] = r, g, b, a
 			end,
 			desc = "If Player Color is enabled, your bar have this color.",
@@ -832,8 +839,8 @@ local build_options_panel = function()
 		},
 		{
 			type = "toggle",
-			get = function() return ThreatMeter.saveddata.useclasscolors end,
-			set = function (self, fixedparam, value) ThreatMeter.saveddata.useclasscolors = value end,
+			get = function() return ChuntMeter.saveddata.useclasscolors end,
+			set = function (self, fixedparam, value) ChuntMeter.saveddata.useclasscolors = value end,
 			desc = "When enabled, threat bars uses the class color of the character.",
 			name = "Use Class Colors"
 		},
@@ -843,25 +850,25 @@ local build_options_panel = function()
 
 end
 
-ThreatMeter.OpenOptionsPanel = function()
-	if (not ThreatMeterOptionsWindow) then
+ChuntMeter.OpenOptionsPanel = function()
+	if (not ChuntMeterOptionsWindow) then
 		build_options_panel()
 	end
-	ThreatMeterOptionsWindow:Show()
+	ChuntMeterOptionsWindow:Show()
 end
 
-function ThreatMeter:OnEvent (_, event, ...)
+function ChuntMeter:OnEvent (_, event, ...)
 
 	if (event == "PLAYER_TARGET_CHANGED") then
-		ThreatMeter:TargetChanged()
+		ChuntMeter:TargetChanged()
 	
 	elseif (event == "PLAYER_REGEN_DISABLED") then
-		ThreatMeter.Actived = true
-		ThreatMeter:Start()
+		ChuntMeter.Actived = true
+		ChuntMeter:Start()
 		
 	elseif (event == "PLAYER_REGEN_ENABLED") then
-		ThreatMeter:End()
-		ThreatMeter.Actived = false
+		ChuntMeter:End()
+		ChuntMeter.Actived = false
 	
 	elseif (event == "ADDON_LOADED") then
 		local AddonName = select (1, ...)
@@ -875,38 +882,38 @@ function ThreatMeter:OnEvent (_, event, ...)
 				local MINIMAL_DETAILS_VERSION_REQUIRED = 1
 				
 				--> Install
-				local install, saveddata = _G._detalhes:InstallPlugin ("SOLO", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ThreatMeter, "DETAILS_PLUGIN_CHUNT", MINIMAL_DETAILS_VERSION_REQUIRED, "Chunt", "v1.0.0")
+				local install, saveddata = _G._detalhes:InstallPlugin ("SOLO", Loc ["STRING_PLUGIN_NAME"], "Interface\\CHATFRAME\\UI-ChatIcon-D3", ChuntMeter, "DETAILS_PLUGIN_CHUNT", MINIMAL_DETAILS_VERSION_REQUIRED, "Chunt", "v1.0.0")
 				if (type (install) == "table" and install.error) then
 					print (install.error)
 				end
 				
 				--> Register needed events
-				_G._detalhes:RegisterEvent (ThreatMeter, "COMBAT_PLAYER_ENTER")
-				_G._detalhes:RegisterEvent (ThreatMeter, "COMBAT_PLAYER_LEAVE")
-				_G._detalhes:RegisterEvent (ThreatMeter, "DETAILS_INSTANCE_ENDRESIZE")
-				_G._detalhes:RegisterEvent (ThreatMeter, "DETAILS_INSTANCE_SIZECHANGED")
-				_G._detalhes:RegisterEvent (ThreatMeter, "DETAILS_INSTANCE_STARTSTRETCH")
-				_G._detalhes:RegisterEvent (ThreatMeter, "DETAILS_INSTANCE_ENDSTRETCH")
-				_G._detalhes:RegisterEvent (ThreatMeter, "DETAILS_OPTIONS_MODIFIED")
+				_G._detalhes:RegisterEvent (ChuntMeter, "COMBAT_PLAYER_ENTER")
+				_G._detalhes:RegisterEvent (ChuntMeter, "COMBAT_PLAYER_LEAVE")
+				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_ENDRESIZE")
+				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_SIZECHANGED")
+				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_STARTSTRETCH")
+				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_ENDSTRETCH")
+				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_OPTIONS_MODIFIED")
 				
-				ThreatMeterFrame:RegisterEvent ("PLAYER_TARGET_CHANGED")
-				ThreatMeterFrame:RegisterEvent ("PLAYER_REGEN_DISABLED")
-				ThreatMeterFrame:RegisterEvent ("PLAYER_REGEN_ENABLED")
+				ChuntMeterFrame:RegisterEvent ("PLAYER_TARGET_CHANGED")
+				ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_DISABLED")
+				ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_ENABLED")
 
 				--> Saved data
-				ThreatMeter.saveddata = saveddata or {}
+				ChuntMeter.saveddata = saveddata or {}
 				
-				ThreatMeter.saveddata.updatespeed = ThreatMeter.saveddata.updatespeed or 0.25
-				ThreatMeter.saveddata.animate = ThreatMeter.saveddata.animate or false
-				ThreatMeter.saveddata.showamount = ThreatMeter.saveddata.showamount or false
-				ThreatMeter.saveddata.useplayercolor = ThreatMeter.saveddata.useplayercolor or false
-				ThreatMeter.saveddata.playercolor = ThreatMeter.saveddata.playercolor or {1, 1, 1}
-				ThreatMeter.saveddata.useclasscolors = ThreatMeter.saveddata.useclasscolors or false
+				ChuntMeter.saveddata.updatespeed = ChuntMeter.saveddata.updatespeed or 0.25
+				ChuntMeter.saveddata.animate = ChuntMeter.saveddata.animate or false
+				ChuntMeter.saveddata.showamount = ChuntMeter.saveddata.showamount or false
+				ChuntMeter.saveddata.useplayercolor = ChuntMeter.saveddata.useplayercolor or false
+				ChuntMeter.saveddata.playercolor = ChuntMeter.saveddata.playercolor or {1, 1, 1}
+				ChuntMeter.saveddata.useclasscolors = ChuntMeter.saveddata.useclasscolors or false
 
-				ThreatMeter.options = ThreatMeter.saveddata
+				ChuntMeter.options = ChuntMeter.saveddata
 
-				ThreatMeter.saveddata.updatespeed = 0.20
-				--ThreatMeter.saveddata.animate = true
+				ChuntMeter.saveddata.updatespeed = 0.20
+				--ChuntMeter.saveddata.animate = true
 				
 				--> Register slash commands
 				SLASH_DETAILS_CHUNT1, SLASH_DETAILS_CHUNT2 = "/chuntttttt", "/chunt"
@@ -928,22 +935,22 @@ function ThreatMeter:OnEvent (_, event, ...)
 									speed = 0.3
 								end
 								
-								ThreatMeter.saveddata.updatespeed = speed
-								ThreatMeter:Msg (Loc ["STRING_SLASH_SPEED_CHANGED"] .. speed)
+								ChuntMeter.saveddata.updatespeed = speed
+								ChuntMeter:Msg (Loc ["STRING_SLASH_SPEED_CHANGED"] .. speed)
 							else
-								ThreatMeter:Msg (Loc ["STRING_SLASH_SPEED_CURRENT"] .. ThreatMeter.saveddata.updatespeed)
+								ChuntMeter:Msg (Loc ["STRING_SLASH_SPEED_CURRENT"] .. ChuntMeter.saveddata.updatespeed)
 							end
 						end
 
 					elseif (command == Loc ["STRING_SLASH_AMOUNT"]) then
 					
 					else
-						ThreatMeter:Msg (Loc ["STRING_COMMAND_LIST"])
+						ChuntMeter:Msg (Loc ["STRING_COMMAND_LIST"])
 						print ("|cffffaeae/chunt " .. Loc ["STRING_SLASH_SPEED"] .. "|r: " .. Loc ["STRING_SLASH_SPEED_DESC"])
 					
 					end
 				end
-				ThreatMeter.initialized = true
+				ChuntMeter.initialized = true
 			end
 		end
 

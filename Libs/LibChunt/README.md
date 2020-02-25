@@ -11,14 +11,14 @@ To provide Threat data to other players just include and load the lib as part of
 To start using the lib to display threat data get the latest revision from LibStub and get the UnitThreatSituation:
 
 ```
-local ThreatLib = LibStub:GetLibrary("LibChunt")
+local ChuntLib = LibStub:GetLibrary("LibChunt")
 
 local _UnitThreatSituation = function (unit, mob)
-    return ThreatLib:UnitThreatSituation (unit, mob)
+    return ChuntLib:UnitThreatSituation (unit, mob)
 end
 
 local _UnitDetailedThreatSituation = function (unit, mob)
-    return ThreatLib:UnitDetailedThreatSituation (unit, mob)
+    return ChuntLib:UnitDetailedThreatSituation (unit, mob)
 end
 ```
 
