@@ -47,26 +47,11 @@ local ChuntMeterFrame = ChuntMeter.Frame
 
 ChuntMeter:SetPluginDescription ("Small tool for track the C.H.U.N.T. score for you and other healers in your raid.")
 
-local ChuntLib = LibStub:GetLibrary("LibChunt")
 
-local _UnitThreatSituation = function (unit, mob)
-    return ChuntLib:UnitThreatSituation (unit, mob)
+local CheckStatus = function(...)
+	--print (...)
 end
 
-local _UnitDetailedThreatSituation = function (unit, mob)
-    return ChuntLib:UnitDetailedThreatSituation (unit, mob)
-end
-
---[=
-	local CheckStatus = function(...)
-		--print (...)
-	end
-
-	ChuntLib:RegisterCallback("Activate", CheckStatus)
-    ChuntLib:RegisterCallback("Deactivate", CheckStatus)
-    ChuntLib:RegisterCallback("ThreatUpdated", CheckStatus)
-    ChuntLib:RequestActiveOnSolo (true)
---]=]
 
 local _
 
@@ -418,25 +403,9 @@ local function CreatePluginFrames (data)
 						return
 					end
 				
-					local isTanking, status, threatpct, rawthreatpct, threatvalue = ChuntLib:UnitDetailedThreatSituation ("party"..i, "target")
-					--returns nil, 0, nil, nil, 0
-					--	print (isTanking, status, threatpct, rawthreatpct, threatvalue)
-
-					local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
-
-					isTanking = isTanking or false
-					threatpct = threatpct or 0
-					rawthreatpct = rawthreatpct or (0 + nameOrder)
-
-					if (status) then
-						threat_table [2] = threatpct + nameOrder
-						threat_table [3] = isTanking
-						threat_table [6] = threatvalue + nameOrder
-					else
-						threat_table [2] = 0 + nameOrder
-						threat_table [3] = false
-						threat_table [6] = 0 + nameOrder
-					end
+					threat_table [2] = 1
+					threat_table [3] = false
+					threat_table [6] = 1
 				end
 				
 				local thisplayer_name = GetUnitName ("player", true)
@@ -444,21 +413,9 @@ local function CreatePluginFrames (data)
 				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 				local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
 
-				local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("player", "target")
-
-				isTanking = isTanking or false
-				threatpct = threatpct or 0
-				rawthreatpct = rawthreatpct or (0 + nameOrder)
-
-				if (status) then
-					threat_table [2] = threatpct + nameOrder
-					threat_table [3] = isTanking
-					threat_table [6] = threatvalue + nameOrder
-				else
-					threat_table [2] = 0 + nameOrder
-					threat_table [3] = false
-					threat_table [6] = 0 + nameOrder
-				end
+				threat_table [2] = 1
+				threat_table [3] = false
+				threat_table [6] = 1
 
 				--player pet
 				--> pet
@@ -469,21 +426,10 @@ local function CreatePluginFrames (data)
 
 					if (threat_table) then
 
-						local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("pet", "target")
-
-						--threatpct, rawthreatpct are nil on single player, dunno with pets
-						threatpct = threatpct or 0
-						rawthreatpct = rawthreatpct or 0
-
-						if (status) then
-							threat_table [2] = threatpct
-							threat_table [3] = isTanking
-							threat_table [6] = threatvalue
-						else
-							threat_table [2] = 0
-							threat_table [3] = false
-							threat_table [6] = 0
-						end
+						
+						threat_table [2] = 1
+						threat_table [3] = false
+						threat_table [6] = 1
 					end
 				end
 			else
@@ -492,24 +438,10 @@ local function CreatePluginFrames (data)
 				local thisplayer_name = GetUnitName ("player", true)
 				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
 				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-				local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("player", "target")
-
-				local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
-				--local player_heal = Details:GetActor (segmentID = _G.DETAILS_SEGMENTID_CURRENT, attributeID = _G.DETAILS_ATTRIBUTE_HEAL, thisplayer_name)
 				
-				--threatpct, rawthreatpct are nil on single player
-				threatpct = threatpct or 0
-				rawthreatpct = rawthreatpct or (0 + nameOrder)
-
-				if (status) then
-					threat_table [2] = threatpct
-					threat_table [3] = isTanking
-					threat_table [6] = threatvalue + nameOrder
-				else
-					threat_table [2] = 0
-					threat_table [3] = false
-					threat_table [6] = 0 or nameOrder
-				end
+				threat_table [2] = 1
+				threat_table [3] = false
+				threat_table [6] = 1
 				
 				if (_DEBUG) then
 					for i = 1, 10 do
@@ -525,21 +457,10 @@ local function CreatePluginFrames (data)
 
 					if (threat_table) then
 
-						local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("pet", "target")
-
-						--threatpct, rawthreatpct are nil on single player, dunno with pets
-						threatpct = threatpct or 0
-						rawthreatpct = rawthreatpct or 0
-
-						if (status) then
-							threat_table [2] = threatpct
-							threat_table [3] = isTanking
-							threat_table [6] = threatvalue
-						else
-							threat_table [2] = 0
-							threat_table [3] = false
-							threat_table [6] = 0
-						end
+						
+						threat_table [2] = 1
+						threat_table [3] = false
+						threat_table [6] = 1
 					end
 				end
 			end
