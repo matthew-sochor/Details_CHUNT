@@ -41,7 +41,7 @@ local _math_abs = math.abs
 local RAID_CLASS_COLORS = RAID_CLASS_COLORS
 
 --> Create the plugin Object
-local ChuntMeter = _detalhes:NewPluginObject ("Details_CHUNT")
+ChuntMeter = _detalhes:NewPluginObject ("Details_CHUNT")
 --> Main Frame
 local ChuntMeterFrame = ChuntMeter.Frame
 
@@ -109,12 +109,14 @@ local function CreatePluginFrames (data)
 					return
 				end
 				ChuntMeter.Actived = true
+				ChuntMeter.UpdateWindowTitle ("start 2")
 				ChuntMeter:Start()
 			end
 		
 		elseif (event == "COMBAT_PLAYER_ENTER") then
 			if (not ChuntMeter.Actived) then
 				ChuntMeter.Actived = true
+				ChuntMeter.UpdateWindowTitle ("start 3")
 				ChuntMeter:Start()
 			end
 		
@@ -353,7 +355,7 @@ local function CreatePluginFrames (data)
 	
 		if (ChuntMeter.Actived and UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
 
-			ChuntMeter.UpdateWindowTitle (UnitName ("target"))
+			--ChuntMeter.UpdateWindowTitle (UnitName ("target"))
 
 			if (_IsInRaid()) then
 				for i = 1, _GetNumGroupMembers(), 1 do
@@ -364,6 +366,7 @@ local function CreatePluginFrames (data)
 				
 					if (not threat_table) then
 						--> some one joined the group while the player are in combat
+						ChuntMeter.UpdateWindowTitle ("start 4")
 						ChuntMeter:Start()
 						return
 					end
@@ -393,6 +396,7 @@ local function CreatePluginFrames (data)
 				
 					if (not threat_table) then
 						--> some one joined the group while the player are in combat
+						ChuntMeter.UpdateWindowTitle ("start 5")
 						ChuntMeter:Start()
 						return
 					end
@@ -433,9 +437,22 @@ local function CreatePluginFrames (data)
 				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
 				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 				
-				threat_table [2] = 1
-				threat_table [3] = false
-				threat_table [6] = 1
+				combat = Details:GetCurrentCombat()
+				local combat_time = combat:GetCombatTime()
+				ChuntMeter.UpdateWindowTitle ("playa" .. thisplayer_name)
+				thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, thisplayer_name)
+
+				local totalHeal = thisplayer.total
+				local totalOverHeal = thisplayer.totalover
+				if (threat_table) then
+
+					
+					threat_table [2] = totalHeal or 5
+					threat_table [3] = false
+					threat_table [6] = totalOverHeal or 5
+				else
+					ChuntMeter.UpdateWindowTitle ('fuck')
+				end
 				
 				if (_DEBUG) then
 					for i = 1, 10 do
@@ -449,12 +466,15 @@ local function CreatePluginFrames (data)
 					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
 					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 
+					local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
+					local totalHeal = thisplayer.total
+					local totalOverHeal = thisplayer.totalover
 					if (threat_table) then
 
 						
-						threat_table [2] = 1
+						threat_table [2] = totalHeal
 						threat_table [3] = false
-						threat_table [6] = 1
+						threat_table [6] = totalOverHeal
 					end
 				end
 			end
@@ -466,10 +486,10 @@ local function CreatePluginFrames (data)
 			end
 			
 			--> no threat on this enemy
-			if (ChuntMeter.player_list_indexes [1] [2] < 1) then
-				ChuntMeter:HideBars()
-				return
-			end
+			--if (ChuntMeter.player_list_indexes [1] [2] < 1) then
+			--	ChuntMeter:HideBars()
+			--	return
+			--end
 			
 			local lastIndex = 0
 			local shownMe = false
@@ -477,7 +497,7 @@ local function CreatePluginFrames (data)
 			local pullRow = ChuntMeter.ShownRows [1]
 			local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
 			if (me) then
-			
+				
 				local myThreat = me [6] or 0
 				local myRole = me [4]
 				
@@ -485,10 +505,10 @@ local function CreatePluginFrames (data)
 				local aggro = topThreat [6] * (CheckInteractDistance ("target", 3) and 1.1 or 1.3)
 				local combat = Details:GetCurrentCombat()
 				local combat_time = combat:GetCombatTime()
-				local player = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
+				local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
 
-				local totalHeal = player.total
-				local totalOverHeal = player.totalover
+				local totalHeal = thisplayer.total
+				local totalOverHeal = thisplayer.totalover
 				local _player_targets = ""
 				--for k, v in ipairs(player.spells) do
 				--	_player_targets = _player_targets .. "hi" -- .. k .. ":" .. v .. "; "
@@ -617,15 +637,16 @@ local function CreatePluginFrames (data)
 		local NewTarget = _UnitName ("target")
 		if (NewTarget and not _UnitIsFriend ("player", "target")) then
 			target = NewTarget
-			ChuntMeter.UpdateWindowTitle (NewTarget)
+			-- ChuntMeter.UpdateWindowTitle (NewTarget)
 			Threater()
 		else
-			ChuntMeter.UpdateWindowTitle (false)
+			-- ChuntMeter.UpdateWindowTitle (false)
 			ChuntMeter:HideBars()
 		end
 	end
 	
 	function ChuntMeter:Tick()
+		--ChuntMeter.UpdateWindowTitle('tick')
 		Threater()
 	end
 
@@ -698,18 +719,26 @@ local function CreatePluginFrames (data)
 			ChuntMeter.job_thread = job_thread
 		end
 	end
+
+	function ChuntMeter:Restart()
+		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
+		ChuntMeter.job_thread = job_thread
+		ChuntMeter.UpdateWindowTitle ("restarted")
+	end
 	
 	function ChuntMeter:End()
-		ChuntMeter:HideBars()
+		--ChuntMeter:HideBars()
+
 		if (ChuntMeter.job_thread) then
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
-			ChuntMeter.UpdateWindowTitle (false)
+			ChuntMeter.UpdateWindowTitle ("ended")
 		end
 	end
 	
 	function ChuntMeter:Cancel()
 		ChuntMeter:HideBars()
+		ChuntMeter.UpdateWindowTitle ("canceled")
 		if (ChuntMeter.job_thread) then
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
@@ -774,12 +803,18 @@ end
 
 function ChuntMeter:OnEvent (_, event, ...)
 
-	if (event == "PLAYER_TARGET_CHANGED") then
-		ChuntMeter:TargetChanged()
+	--if (event == "PLAYER_TARGET_CHANGED") then
+	--	ChuntMeter:TargetChanged()
 	
-	elseif (event == "PLAYER_REGEN_DISABLED") then
-		ChuntMeter.Actived = true
-		ChuntMeter:Start()
+	--else
+	if (event == "PLAYER_REGEN_DISABLED") then
+		if (not ChuntMeter.Actived) then
+			ChuntMeter.Actived = true
+			ChuntMeter.UpdateWindowTitle ("start 1")
+			ChuntMeter:Start()
+		else
+			ChuntMeter:Restart()
+		end
 		
 	elseif (event == "PLAYER_REGEN_ENABLED") then
 		ChuntMeter:End()
@@ -811,7 +846,7 @@ function ChuntMeter:OnEvent (_, event, ...)
 				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_ENDSTRETCH")
 				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_OPTIONS_MODIFIED")
 				
-				ChuntMeterFrame:RegisterEvent ("PLAYER_TARGET_CHANGED")
+				--ChuntMeterFrame:RegisterEvent ("PLAYER_TARGET_CHANGED")
 				ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_DISABLED")
 				ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_ENABLED")
 
