@@ -68,7 +68,6 @@ local function CreatePluginFrames (data)
 	--> current shown rows
 	ChuntMeter.ShownRows = {}
 	-->
-	ChuntMeter.Actived = false
 	
 	--> localize functions
 	ChuntMeter.percent_color = ChuntMeter.percent_color
@@ -86,7 +85,6 @@ local function CreatePluginFrames (data)
 			ChuntMeter:RefreshRows()
 			
 		elseif (event == "HIDE") then --> plugin hidded, disabled
-			ChuntMeter.Actived = false
 			ChuntMeter:Cancel()
 		
 		elseif (event == "SHOW") then
@@ -102,23 +100,18 @@ local function CreatePluginFrames (data)
 			
 			player = GetUnitName ("player", true)
 			
-			ChuntMeter.Actived = false
 
 			if (ChuntMeter:IsInCombat() or UnitAffectingCombat ("player")) then
 				if (not ChuntMeter.initialized) then
 					return
 				end
-				ChuntMeter.Actived = true
 				ChuntMeter.UpdateWindowTitle ("start 2")
 				ChuntMeter:Start()
 			end
 		
 		elseif (event == "COMBAT_PLAYER_ENTER") then
-			if (not ChuntMeter.Actived) then
-				ChuntMeter.Actived = true
-				ChuntMeter.UpdateWindowTitle ("start 3")
-				ChuntMeter:Start()
-			end
+			ChuntMeter.UpdateWindowTitle ("start 3")
+			ChuntMeter:Start()
 		
 		elseif (event == "DETAILS_INSTANCE_ENDRESIZE" or event == "DETAILS_INSTANCE_SIZECHANGED") then
 		
@@ -353,7 +346,7 @@ local function CreatePluginFrames (data)
 
 		local options = ChuntMeter.options
 	
-		if (ChuntMeter.Actived and UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
+		if (UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
 
 			--ChuntMeter.UpdateWindowTitle (UnitName ("target"))
 
@@ -437,7 +430,7 @@ local function CreatePluginFrames (data)
 				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
 				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 				
-				combat = Details:GetCurrentCombat()
+				local combat = Details:GetCurrentCombat()
 				local combat_time = combat:GetCombatTime()
 				ChuntMeter.UpdateWindowTitle ("playa" .. thisplayer_name)
 				thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, thisplayer_name)
@@ -630,21 +623,6 @@ local function CreatePluginFrames (data)
 		
 	end
 	
-	function ChuntMeter:TargetChanged()
-		if (not ChuntMeter.Actived) then
-			return
-		end
-		local NewTarget = _UnitName ("target")
-		if (NewTarget and not _UnitIsFriend ("player", "target")) then
-			target = NewTarget
-			-- ChuntMeter.UpdateWindowTitle (NewTarget)
-			Threater()
-		else
-			-- ChuntMeter.UpdateWindowTitle (false)
-			ChuntMeter:HideBars()
-		end
-	end
-	
 	function ChuntMeter:Tick()
 		--ChuntMeter.UpdateWindowTitle('tick')
 		Threater()
@@ -652,72 +630,70 @@ local function CreatePluginFrames (data)
 
 	function ChuntMeter:Start()
 		ChuntMeter:HideBars()
-		if (ChuntMeter.Actived) then
-			if (ChuntMeter.job_thread) then
-				ChuntMeter:CancelTimer (ChuntMeter.job_thread)
-				ChuntMeter.job_thread = nil
-			end
-			
-			ChuntMeter.player_list_indexes = {}
-			ChuntMeter.player_list_hash = {}
-			
-			--> pre build player list
-			if (_IsInRaid()) then
-				for i = 1, _GetNumGroupMembers(), 1 do
-					local thisplayer_name = GetUnitName ("raid"..i, true)
-					local role = _UnitGroupRolesAssigned ("raid"..i)
-					local _, class = UnitClass (thisplayer_name)
-					local t = {thisplayer_name, 0, false, role, class, 0}
-					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-					ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
-				end
-
-				
-
-			elseif (_IsInGroup()) then
-				for i = 1, _GetNumGroupMembers()-1, 1 do
-					local thisplayer_name = GetUnitName ("party"..i, true)
-					local role = _UnitGroupRolesAssigned ("party"..i)
-					local _, class = UnitClass (thisplayer_name)
-					local t = {thisplayer_name, 0, false, role, class, 0}
-					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-					ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
-				end
-				local thisplayer_name = GetUnitName ("player", true)
-				local role = _UnitGroupRolesAssigned ("player")
-				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, 0}
-				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
-
-				if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
-					local thispet_name = GetUnitName ("pet", true) .. " *PET*"
-					local role = "DAMAGER"
-					local t = {thispet_name, 0, false, role, class, 0}
-					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-					ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
-				end
-				
-			else
-				local thisplayer_name = GetUnitName ("player", true)
-				local role = _UnitGroupRolesAssigned ("player")
-				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, 0}
-				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
-				
-				if (UnitExists ("pet")) then
-					local thispet_name = GetUnitName ("pet", true) .. " *PET*"
-					local role = "DAMAGER"
-					local t = {thispet_name, 0, false, role, class, 0}
-					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-					ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
-				end
-			end
-			
-			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
-			ChuntMeter.job_thread = job_thread
+		if (ChuntMeter.job_thread) then
+			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
+			ChuntMeter.job_thread = nil
 		end
+		
+		ChuntMeter.player_list_indexes = {}
+		ChuntMeter.player_list_hash = {}
+		
+		--> pre build player list
+		if (_IsInRaid()) then
+			for i = 1, _GetNumGroupMembers(), 1 do
+				local thisplayer_name = GetUnitName ("raid"..i, true)
+				local role = _UnitGroupRolesAssigned ("raid"..i)
+				local _, class = UnitClass (thisplayer_name)
+				local t = {thisplayer_name, 0, false, role, class, 0}
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+			end
+
+			
+
+		elseif (_IsInGroup()) then
+			for i = 1, _GetNumGroupMembers()-1, 1 do
+				local thisplayer_name = GetUnitName ("party"..i, true)
+				local role = _UnitGroupRolesAssigned ("party"..i)
+				local _, class = UnitClass (thisplayer_name)
+				local t = {thisplayer_name, 0, false, role, class, 0}
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+			end
+			local thisplayer_name = GetUnitName ("player", true)
+			local role = _UnitGroupRolesAssigned ("player")
+			local _, class = UnitClass (thisplayer_name)
+			local t = {thisplayer_name, 0, false, role, class, 0}
+			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+
+			if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
+				local thispet_name = GetUnitName ("pet", true) .. " *PET*"
+				local role = "DAMAGER"
+				local t = {thispet_name, 0, false, role, class, 0}
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
+			end
+			
+		else
+			local thisplayer_name = GetUnitName ("player", true)
+			local role = _UnitGroupRolesAssigned ("player")
+			local _, class = UnitClass (thisplayer_name)
+			local t = {thisplayer_name, 0, false, role, class, 0}
+			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+			
+			if (UnitExists ("pet")) then
+				local thispet_name = GetUnitName ("pet", true) .. " *PET*"
+				local role = "DAMAGER"
+				local t = {thispet_name, 0, false, role, class, 0}
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
+			end
+		end
+		
+		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
+		ChuntMeter.job_thread = job_thread
 	end
 
 	function ChuntMeter:Restart()
@@ -743,7 +719,6 @@ local function CreatePluginFrames (data)
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
 		end
-		ChuntMeter.Actived = false
 	end
 	
 end
@@ -808,17 +783,11 @@ function ChuntMeter:OnEvent (_, event, ...)
 	
 	--else
 	if (event == "PLAYER_REGEN_DISABLED") then
-		if (not ChuntMeter.Actived) then
-			ChuntMeter.Actived = true
-			ChuntMeter.UpdateWindowTitle ("start 1")
-			ChuntMeter:Start()
-		else
-			ChuntMeter:Restart()
-		end
+		ChuntMeter.UpdateWindowTitle ("start 1")
+		ChuntMeter:Start()
 		
 	elseif (event == "PLAYER_REGEN_ENABLED") then
 		ChuntMeter:End()
-		ChuntMeter.Actived = false
 	
 	elseif (event == "ADDON_LOADED") then
 		local AddonName = select (1, ...)
