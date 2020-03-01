@@ -167,6 +167,40 @@ local function CreatePluginFrames (data)
 		end
 	end
 
+	function ChuntMeter:CalculateGrumphScore()
+		return 1500
+	end
+
+	function ChuntMeter:CalculateChuntScore()
+		return 100
+	end
+
+	function ChuntMeter:UpdateHeals(player_name)
+		local threat_table_index = ChuntMeter.player_list_hash [player_name]
+		local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
+		if (not threat_table) then
+			--> some one joined the group while the player are in combat
+			ChuntMeter.UpdateWindowTitle ("start updateheals no threat table")
+			ChuntMeter:Start()
+			return
+		end
+		local combat = Details:GetCurrentCombat()
+		player_heals = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, player_name)
+		if (player_heals) then
+			threat_table [2] = player_heals.total
+			threat_table [3] = true
+			threat_table [6] = player_heals.targets
+			threat_table [7] = player_heals.targets_overheal
+
+		else
+			threat_table [2] = 0
+			threat_table [3] = false
+			threat_table [6] = {}
+			threat_table [7] = {}
+		end
+
+	end
+
 	function ChuntMeter:GetNameOrder (playerName)
 		local name = string.upper (playerName .. "zz")
 		local byte1 = math.abs (string.byte (name, 2)-91)/1000000
@@ -345,147 +379,28 @@ local function CreatePluginFrames (data)
 	local Threater = function()
 
 		local options = ChuntMeter.options
-	
-		--if (UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
-
-			--ChuntMeter.UpdateWindowTitle (UnitName ("target"))
 
 		if (_IsInRaid()) then
 			ChuntMeter.UpdateWindowTitle ("in raid")
 			for i = 1, _GetNumGroupMembers(), 1 do
-			
-				local thisplayer_name = GetUnitName ("raid"..i, true)
-				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-			
-				if (not threat_table) then
-					--> some one joined the group while the player are in combat
-					ChuntMeter.UpdateWindowTitle ("start threater - no threat table")
-					ChuntMeter:Start()
-					return
-				end
-			
-				local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("raid"..i, "target")
-
-				isTanking = isTanking or false
-				threatpct = threatpct or 0
-				rawthreatpct = rawthreatpct or 0
-
-				if (status) then
-					threat_table [2] = threatpct
-					threat_table [3] = isTanking
-					threat_table [6] = threatvalue
-				else
-					threat_table [2] = 0
-					threat_table [3] = false
-					threat_table [6] = 0
-				end
-
+				local raid_player_name = GetUnitName ("raid"..i, true)
+				ChuntMeter:UpdateHeals(raid_player_name)
 			end
 		elseif (_IsInGroup()) then
-			ChuntMeter.UpdateWindowTitle ("in group")
-			for i = 1, _GetNumGroupMembers()-1, 1 do
-				local thisplayer_name = GetUnitName ("party"..i, true)
-				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-			
-				if (not threat_table) then
-					--> some one joined the group while the player are in combat
-					ChuntMeter.UpdateWindowTitle ("start group no threat table")
-					ChuntMeter:Start()
-					return
-				end
-			
-				threat_table [2] = 1
-				threat_table [3] = false
-				threat_table [6] = 1
-			end
-			
-			local thisplayer_name = GetUnitName ("player", true)
-			local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-			local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-			local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
-
-			threat_table [2] = 1
-			threat_table [3] = false
-			threat_table [6] = 1
-
-			--player pet
-			--> pet
-			if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
-				local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
-				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-
-				if (threat_table) then
-
-					
-					threat_table [2] = 1
-					threat_table [3] = false
-					threat_table [6] = 1
-				end
+			for i = 1, _GetNumGroupMembers(), 1 do
+				local group_player_name = GetUnitName ("party"..i, true)
+				ChuntMeter:UpdateHeals(group_player_name)
 			end
 		else
-		
-			ChuntMeter.UpdateWindowTitle ("solo")
-			--> player
-			local thisplayer_name = GetUnitName ("player", true)
-			local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-			local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-			
-			ChuntMeter.UpdateWindowTitle ('hii')
-			local combat = Details:GetCurrentCombat()
-			ChuntMeter.UpdateWindowTitle ('hiii')
-			--local combat_time = combat:GetCombatTime()
-			--ChuntMeter.UpdateWindowTitle ("playa" .. thisplayer_name)
-			thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, thisplayer_name)
-			--ChuntMeter.UpdateWindowTitle (thisplayer_name)
-			if (thisplayer) then
-				ChuntMeter.UpdateWindowTitle ('heals yo')
-				threat_table [2] = thisplayer.total
-				threat_table [3] = false
-				threat_table [6] = thisplayer.totalover
-
-			else
-				ChuntMeter.UpdateWindowTitle ('no heals yo')
-				threat_table [2] = 5
-				threat_table [3] = false
-				threat_table [6] = 5
-			end
-			
-			--> pet
-			if (UnitExists ("pet")) then
-				ChuntMeter.UpdateWindowTitle ("solo pet")
-				local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
-				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-
-				local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
-				local totalHeal = thisplayer.total
-				local totalOverHeal = thisplayer.totalover
-				if (threat_table) then
-
-					
-					threat_table [2] = totalHeal
-					threat_table [3] = false
-					threat_table [6] = totalOverHeal
-				end
-			end
+			local this_player_name = GetUnitName ("player", true)
+			ChuntMeter:UpdateHeals(this_player_name)
 		end
 		
-		ChuntMeter.UpdateWindowTitle ("table sort")
 		--> sort
 		_table_sort (ChuntMeter.player_list_indexes, sort)
 		for index, t in _ipairs (ChuntMeter.player_list_indexes) do
 			ChuntMeter.player_list_hash [t[1]] = index
 		end
-		
-		ChuntMeter.UpdateWindowTitle ("table sorted")
-		--> no threat on this enemy
-		--if (ChuntMeter.player_list_indexes [1] [2] < 1) then
-		--	ChuntMeter:HideBars()
-		--	return
-		--end
 		
 		local lastIndex = 0
 		local shownMe = false
@@ -493,10 +408,7 @@ local function CreatePluginFrames (data)
 		local pullRow = ChuntMeter.ShownRows [1]
 		local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
 		if (me) then
-			ChuntMeter.UpdateWindowTitle ("if me")
 			
-			local myThreat = me [6] or 0
-			local myRole = me [4]
 			
 			local topThreat = ChuntMeter.player_list_indexes [1]
 			--local aggro = topThreat [6] * (CheckInteractDistance ("target", 3) and 1.1 or 1.3)
@@ -511,9 +423,9 @@ local function CreatePluginFrames (data)
 			--	_player_targets = _player_targets .. "hi" -- .. k .. ":" .. v .. "; "
 			--end
 			--message(combat_time)
-			pullRow:SetLeftText ("hi iggy")
+			pullRow:SetLeftText ("G.R.U.M.P.H. score")
 			--local realPercent = _math_floor (aggro / max (topThreat [6], 0.01) * 100)
-			pullRow:SetRightText ("Total: " .. topThreat[2] .. " Overheal: " .. topThreat[6]) --
+			pullRow:SetRightText ("Total: " .. topThreat[2]) --
 			--pullRow.SetRightText(_player_targets)
 			pullRow:SetValue (100)
 			
@@ -651,7 +563,7 @@ local function CreatePluginFrames (data)
 				local thisplayer_name = GetUnitName ("raid"..i, true)
 				local role = _UnitGroupRolesAssigned ("raid"..i)
 				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, 0}
+				local t = {thisplayer_name, 0, false, role, class, {}, {}}
 				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 			end
@@ -663,40 +575,26 @@ local function CreatePluginFrames (data)
 				local thisplayer_name = GetUnitName ("party"..i, true)
 				local role = _UnitGroupRolesAssigned ("party"..i)
 				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, 0}
+				local t = {thisplayer_name, 0, false, role, class, {}, {}}
 				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 			end
 			local thisplayer_name = GetUnitName ("player", true)
 			local role = _UnitGroupRolesAssigned ("player")
 			local _, class = UnitClass (thisplayer_name)
-			local t = {thisplayer_name, 0, false, role, class, 0}
+			local t = {thisplayer_name, 0, false, role, class, {}, {}}
 			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 
-			if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
-				local thispet_name = GetUnitName ("pet", true) .. " *PET*"
-				local role = "DAMAGER"
-				local t = {thispet_name, 0, false, role, class, 0}
-				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-				ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
-			end
 			
 		else
 			local thisplayer_name = GetUnitName ("player", true)
 			local role = _UnitGroupRolesAssigned ("player")
 			local _, class = UnitClass (thisplayer_name)
-			local t = {thisplayer_name, 0, false, role, class, 0}
+			local t = {thisplayer_name, 0, false, role, class, {}, {}}
 			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 			
-			if (UnitExists ("pet")) then
-				local thispet_name = GetUnitName ("pet", true) .. " *PET*"
-				local role = "DAMAGER"
-				local t = {thispet_name, 0, false, role, class, 0}
-				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-				ChuntMeter.player_list_hash [thispet_name] = #ChuntMeter.player_list_indexes
-			end
 		end
 		
 		ChuntMeter.UpdateWindowTitle('timer scheduled start')
