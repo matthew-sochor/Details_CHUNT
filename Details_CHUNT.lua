@@ -105,12 +105,12 @@ local function CreatePluginFrames (data)
 				if (not ChuntMeter.initialized) then
 					return
 				end
-				ChuntMeter.UpdateWindowTitle ("start 2")
+				ChuntMeter.UpdateWindowTitle ("start from details event - show")
 				ChuntMeter:Start()
 			end
 		
 		elseif (event == "COMBAT_PLAYER_ENTER") then
-			ChuntMeter.UpdateWindowTitle ("start 3")
+			ChuntMeter.UpdateWindowTitle ("start from details event - combat player enter")
 			ChuntMeter:Start()
 		
 		elseif (event == "DETAILS_INSTANCE_ENDRESIZE" or event == "DETAILS_INSTANCE_SIZECHANGED") then
@@ -346,291 +346,298 @@ local function CreatePluginFrames (data)
 
 		local options = ChuntMeter.options
 	
-		if (UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
+		--if (UnitExists ("target") and not _UnitIsFriend ("player", "target")) then
 
 			--ChuntMeter.UpdateWindowTitle (UnitName ("target"))
 
-			if (_IsInRaid()) then
-				for i = 1, _GetNumGroupMembers(), 1 do
-				
-					local thisplayer_name = GetUnitName ("raid"..i, true)
-					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-				
-					if (not threat_table) then
-						--> some one joined the group while the player are in combat
-						ChuntMeter.UpdateWindowTitle ("start 4")
-						ChuntMeter:Start()
-						return
-					end
-				
-					local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("raid"..i, "target")
-
-					isTanking = isTanking or false
-					threatpct = threatpct or 0
-					rawthreatpct = rawthreatpct or 0
-
-					if (status) then
-						threat_table [2] = threatpct
-						threat_table [3] = isTanking
-						threat_table [6] = threatvalue
-					else
-						threat_table [2] = 0
-						threat_table [3] = false
-						threat_table [6] = 0
-					end
-
+		if (_IsInRaid()) then
+			ChuntMeter.UpdateWindowTitle ("in raid")
+			for i = 1, _GetNumGroupMembers(), 1 do
+			
+				local thisplayer_name = GetUnitName ("raid"..i, true)
+				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
+			
+				if (not threat_table) then
+					--> some one joined the group while the player are in combat
+					ChuntMeter.UpdateWindowTitle ("start threater - no threat table")
+					ChuntMeter:Start()
+					return
 				end
-			elseif (_IsInGroup()) then
-				for i = 1, _GetNumGroupMembers()-1, 1 do
-					local thisplayer_name = GetUnitName ("party"..i, true)
-					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-				
-					if (not threat_table) then
-						--> some one joined the group while the player are in combat
-						ChuntMeter.UpdateWindowTitle ("start 5")
-						ChuntMeter:Start()
-						return
-					end
-				
+			
+				local isTanking, status, threatpct, rawthreatpct, threatvalue = _UnitDetailedThreatSituation ("raid"..i, "target")
+
+				isTanking = isTanking or false
+				threatpct = threatpct or 0
+				rawthreatpct = rawthreatpct or 0
+
+				if (status) then
+					threat_table [2] = threatpct
+					threat_table [3] = isTanking
+					threat_table [6] = threatvalue
+				else
+					threat_table [2] = 0
+					threat_table [3] = false
+					threat_table [6] = 0
+				end
+
+			end
+		elseif (_IsInGroup()) then
+			ChuntMeter.UpdateWindowTitle ("in group")
+			for i = 1, _GetNumGroupMembers()-1, 1 do
+				local thisplayer_name = GetUnitName ("party"..i, true)
+				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
+			
+				if (not threat_table) then
+					--> some one joined the group while the player are in combat
+					ChuntMeter.UpdateWindowTitle ("start group no threat table")
+					ChuntMeter:Start()
+					return
+				end
+			
+				threat_table [2] = 1
+				threat_table [3] = false
+				threat_table [6] = 1
+			end
+			
+			local thisplayer_name = GetUnitName ("player", true)
+			local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+			local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
+			local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
+
+			threat_table [2] = 1
+			threat_table [3] = false
+			threat_table [6] = 1
+
+			--player pet
+			--> pet
+			if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
+				local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
+				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
+
+				if (threat_table) then
+
+					
 					threat_table [2] = 1
 					threat_table [3] = false
 					threat_table [6] = 1
 				end
-				
-				local thisplayer_name = GetUnitName ("player", true)
-				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-				local nameOrder = ChuntMeter:GetNameOrder (thisplayer_name or "zzzzzzz")
-
-				threat_table [2] = 1
-				threat_table [3] = false
-				threat_table [6] = 1
-
-				--player pet
-				--> pet
-				if (UnitExists ("pet") and not IsInInstance() and false) then --disabled
-					local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
-					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-
-					if (threat_table) then
-
-						
-						threat_table [2] = 1
-						threat_table [3] = false
-						threat_table [6] = 1
-					end
-				end
-			else
+			end
+		else
+		
+			ChuntMeter.UpdateWindowTitle ("solo")
+			--> player
+			local thisplayer_name = GetUnitName ("player", true)
+			local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
+			local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
 			
-				--> player
-				local thisplayer_name = GetUnitName ("player", true)
+			ChuntMeter.UpdateWindowTitle ('hii')
+			local combat = Details:GetCurrentCombat()
+			ChuntMeter.UpdateWindowTitle ('hiii')
+			--local combat_time = combat:GetCombatTime()
+			--ChuntMeter.UpdateWindowTitle ("playa" .. thisplayer_name)
+			thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, thisplayer_name)
+			--ChuntMeter.UpdateWindowTitle (thisplayer_name)
+			if (thisplayer) then
+				ChuntMeter.UpdateWindowTitle ('heals yo')
+				threat_table [2] = thisplayer.total
+				threat_table [3] = false
+				threat_table [6] = thisplayer.totalover
+
+			else
+				ChuntMeter.UpdateWindowTitle ('no heals yo')
+				threat_table [2] = 5
+				threat_table [3] = false
+				threat_table [6] = 5
+			end
+			
+			--> pet
+			if (UnitExists ("pet")) then
+				ChuntMeter.UpdateWindowTitle ("solo pet")
+				local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
 				local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
 				local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-				
-				local combat = Details:GetCurrentCombat()
-				local combat_time = combat:GetCombatTime()
-				ChuntMeter.UpdateWindowTitle ("playa" .. thisplayer_name)
-				thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, thisplayer_name)
 
+				local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
 				local totalHeal = thisplayer.total
 				local totalOverHeal = thisplayer.totalover
 				if (threat_table) then
 
 					
-					threat_table [2] = totalHeal or 5
+					threat_table [2] = totalHeal
 					threat_table [3] = false
-					threat_table [6] = totalOverHeal or 5
-				else
-					ChuntMeter.UpdateWindowTitle ('fuck')
-				end
-				
-				if (_DEBUG) then
-					for i = 1, 10 do
-
-					end
-				end
-
-				--> pet
-				if (UnitExists ("pet")) then
-					local thisplayer_name = GetUnitName ("pet", true) .. " *PET*"
-					local threat_table_index = ChuntMeter.player_list_hash [thisplayer_name]
-					local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-
-					local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
-					local totalHeal = thisplayer.total
-					local totalOverHeal = thisplayer.totalover
-					if (threat_table) then
-
-						
-						threat_table [2] = totalHeal
-						threat_table [3] = false
-						threat_table [6] = totalOverHeal
-					end
+					threat_table [6] = totalOverHeal
 				end
 			end
-			
-			--> sort
-			_table_sort (ChuntMeter.player_list_indexes, sort)
-			for index, t in _ipairs (ChuntMeter.player_list_indexes) do
-				ChuntMeter.player_list_hash [t[1]] = index
-			end
-			
-			--> no threat on this enemy
-			--if (ChuntMeter.player_list_indexes [1] [2] < 1) then
-			--	ChuntMeter:HideBars()
-			--	return
-			--end
-			
-			local lastIndex = 0
-			local shownMe = false
-			
-			local pullRow = ChuntMeter.ShownRows [1]
-			local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
-			if (me) then
-				
-				local myThreat = me [6] or 0
-				local myRole = me [4]
-				
-				local topThreat = ChuntMeter.player_list_indexes [1]
-				local aggro = topThreat [6] * (CheckInteractDistance ("target", 3) and 1.1 or 1.3)
-				local combat = Details:GetCurrentCombat()
-				local combat_time = combat:GetCombatTime()
-				local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
-
-				local totalHeal = thisplayer.total
-				local totalOverHeal = thisplayer.totalover
-				local _player_targets = ""
-				--for k, v in ipairs(player.spells) do
-				--	_player_targets = _player_targets .. "hi" -- .. k .. ":" .. v .. "; "
-				--end
-				--message(combat_time)
-				pullRow:SetLeftText ("hi iggy")
-				local realPercent = _math_floor (aggro / max (topThreat [6], 0.01) * 100)
-				pullRow:SetRightText ("Total: " .. totalHeal .. " Overheal: " .. totalOverHeal) --
-				--pullRow.SetRightText(_player_targets)
-				pullRow:SetValue (100)
-				
-				local myPercentToAggro = myThreat / aggro * 100
-				
-				local r, g = ChuntMeter:percent_color (myPercentToAggro)
-				--local r, g = myPercentToAggro / 100, (100-myPercentToAggro) / 100
-				pullRow:SetColor (r, g, 0)
-				pullRow._icon:SetTexture ([[Interface\PVPFrame\Icon-Combat]])
-				--pullRow._icon:SetVertexColor (r, g, 0)
-				pullRow._icon:SetTexCoord (0, 1, 0, 1)
-				
-				pullRow:Show()
-			else
-				if (pullRow) then
-					pullRow:Hide()
-				end
-			end
-			
-			for index = 2, #ChuntMeter.ShownRows do
-				local thisRow = ChuntMeter.ShownRows [index]
-				local threat_actor = ChuntMeter.player_list_indexes [index-1]
-				
-				if (threat_actor) then
-					local role = threat_actor [4]
-					thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
-					
-					local targetHealth = UnitHealth("player")
-					local targetHealthMax = UnitHealthMax("player")
-					thisRow:SetLeftText (ChuntMeter:GetOnlyName (threat_actor [1]))
-					
-					local oldPct = thisRow:GetValue() or 0
-					local pct = threat_actor [2]
-					
-					thisRow:SetRightText ("Chunt: " .. targetHealth .. "/" .. targetHealthMax)
-
-					--do healthbar animation ~animation ~healthbar
-						thisRow.CurrentPercentMax = 100
-						thisRow.AnimationStart = oldPct
-						thisRow.AnimationEnd = pct
-
-						thisRow:SetValue (oldPct)
-						
-						thisRow.IsAnimating = true
-						
-						if (thisRow.AnimationEnd > thisRow.AnimationStart) then
-							thisRow.AnimateFunc = ChuntMeter.AnimateRightWithAccel
-						else
-							thisRow.AnimateFunc = ChuntMeter.AnimateLeftWithAccel
-						end
-
-					--if no animations
-					--thisRow:SetValue (pct)
-					
-					if (options.useplayercolor and threat_actor [1] == player) then
-						thisRow:SetColor (_unpack (options.playercolor))
-						
-					elseif (options.useclasscolors) then
-						local color = RAID_CLASS_COLORS [threat_actor [5]]
-						if (color) then
-							thisRow:SetColor (color.r, color.g, color.b)
-						else
-							thisRow:SetColor (1, 1, 1, 1)
-						end
-					else
-						if (index == 2) then
-							thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
-						else
-							local r, g = ChuntMeter:percent_color (pct, true)
-							thisRow:SetColor (r, g, 0, 1)
-						end
-					end
-					
-					if (not thisRow.statusbar:IsShown()) then
-						thisRow:Show()
-					end
-					if (threat_actor [1] == player) then
-						shownMe = true
-					end
-				else
-					thisRow:Hide()
-				end
-			end
-			
-			if (not shownMe) then
-				--> show my self into last bar
-				local threat_actor = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
-				if (threat_actor) then
-					if (threat_actor [2] and threat_actor [2] > 0.1) then
-						local thisRow = ChuntMeter.ShownRows [#ChuntMeter.ShownRows]
-						thisRow:SetLeftText (player)
-						--thisRow.textleft:SetTextColor (unpack (RAID_CLASS_COLORS [threat_actor [5]]))
-						local role = threat_actor [4]
-						thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
-						thisRow:SetRightText (ChuntMeter:ToK2 (threat_actor [6]) .. " (" .. _cstr ("%.1f", threat_actor [2]) .. "%)")
-						thisRow:SetValue (threat_actor [2])
-						
-						if (options.useplayercolor) then
-							thisRow:SetColor (_unpack (options.playercolor))
-						else
-							local r, g = ChuntMeter:percent_color (threat_actor [2], true)
-							thisRow:SetColor (r, g, 0, .3)
-						end
-					end
-				end
-			end
-		
-		else
-			--print ("nao tem target")
 		end
 		
+		ChuntMeter.UpdateWindowTitle ("table sort")
+		--> sort
+		_table_sort (ChuntMeter.player_list_indexes, sort)
+		for index, t in _ipairs (ChuntMeter.player_list_indexes) do
+			ChuntMeter.player_list_hash [t[1]] = index
+		end
+		
+		ChuntMeter.UpdateWindowTitle ("table sorted")
+		--> no threat on this enemy
+		--if (ChuntMeter.player_list_indexes [1] [2] < 1) then
+		--	ChuntMeter:HideBars()
+		--	return
+		--end
+		
+		local lastIndex = 0
+		local shownMe = false
+		
+		local pullRow = ChuntMeter.ShownRows [1]
+		local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
+		if (me) then
+			ChuntMeter.UpdateWindowTitle ("if me")
+			
+			local myThreat = me [6] or 0
+			local myRole = me [4]
+			
+			local topThreat = ChuntMeter.player_list_indexes [1]
+			--local aggro = topThreat [6] * (CheckInteractDistance ("target", 3) and 1.1 or 1.3)
+			--local combat = Details:GetCurrentCombat()
+			--local combat_time = combat:GetCombatTime()
+			--local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
+
+			--local totalHeal = thisplayer.total
+			--local totalOverHeal = thisplayer.totalover
+			--local _player_targets = ""
+			--for k, v in ipairs(player.spells) do
+			--	_player_targets = _player_targets .. "hi" -- .. k .. ":" .. v .. "; "
+			--end
+			--message(combat_time)
+			pullRow:SetLeftText ("hi iggy")
+			--local realPercent = _math_floor (aggro / max (topThreat [6], 0.01) * 100)
+			pullRow:SetRightText ("Total: " .. topThreat[2] .. " Overheal: " .. topThreat[6]) --
+			--pullRow.SetRightText(_player_targets)
+			pullRow:SetValue (100)
+			
+			--local myPercentToAggro = myThreat / aggro * 100
+			
+			--local r, g = ChuntMeter:percent_color (myPercentToAggro)
+			--local r, g = myPercentToAggro / 100, (100-myPercentToAggro) / 100
+			--pullRow:SetColor (r, g, 0)
+			pullRow._icon:SetTexture ([[Interface\PVPFrame\Icon-Combat]])
+			--pullRow._icon:SetVertexColor (r, g, 0)
+			pullRow._icon:SetTexCoord (0, 1, 0, 1)
+			
+			pullRow:Show()
+		else
+			ChuntMeter.UpdateWindowTitle ("if not me")
+			if (pullRow) then
+				pullRow:Hide()
+			end
+		end
+		
+		ChuntMeter.UpdateWindowTitle ("show rows")
+		for index = 2, #ChuntMeter.ShownRows do
+			local thisRow = ChuntMeter.ShownRows [index]
+			local threat_actor = ChuntMeter.player_list_indexes [index-1]
+			
+			if (threat_actor) then
+				local role = threat_actor [4]
+				thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
+				
+				local targetHealth = UnitHealth("player")
+				local targetHealthMax = UnitHealthMax("player")
+				thisRow:SetLeftText (ChuntMeter:GetOnlyName (threat_actor [1]))
+				
+				local oldPct = thisRow:GetValue() or 0
+				local pct = threat_actor [2]
+				
+				thisRow:SetRightText ("Chunt: " .. targetHealth .. "/" .. targetHealthMax)
+
+				--do healthbar animation ~animation ~healthbar
+					thisRow.CurrentPercentMax = 100
+					thisRow.AnimationStart = oldPct
+					thisRow.AnimationEnd = pct
+
+					thisRow:SetValue (oldPct)
+					
+					thisRow.IsAnimating = true
+					
+					if (thisRow.AnimationEnd > thisRow.AnimationStart) then
+						thisRow.AnimateFunc = ChuntMeter.AnimateRightWithAccel
+					else
+						thisRow.AnimateFunc = ChuntMeter.AnimateLeftWithAccel
+					end
+
+				--if no animations
+				--thisRow:SetValue (pct)
+				
+				if (options.useplayercolor and threat_actor [1] == player) then
+					thisRow:SetColor (_unpack (options.playercolor))
+					
+				elseif (options.useclasscolors) then
+					local color = RAID_CLASS_COLORS [threat_actor [5]]
+					if (color) then
+						thisRow:SetColor (color.r, color.g, color.b)
+					else
+						thisRow:SetColor (1, 1, 1, 1)
+					end
+				else
+					if (index == 2) then
+						thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
+					else
+						local r, g = ChuntMeter:percent_color (pct, true)
+						thisRow:SetColor (r, g, 0, 1)
+					end
+				end
+				
+				if (not thisRow.statusbar:IsShown()) then
+					thisRow:Show()
+				end
+				if (threat_actor [1] == player) then
+					shownMe = true
+				end
+			else
+				thisRow:Hide()
+			end
+		end
+		
+		ChuntMeter.UpdateWindowTitle ("rows shown now")
+		if (not shownMe) then
+			ChuntMeter.UpdateWindowTitle ("if not shownme")
+			--> show my self into last bar
+			local threat_actor = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
+			if (threat_actor) then
+				if (threat_actor [2] and threat_actor [2] > 0.1) then
+					local thisRow = ChuntMeter.ShownRows [#ChuntMeter.ShownRows]
+					thisRow:SetLeftText (player)
+					--thisRow.textleft:SetTextColor (unpack (RAID_CLASS_COLORS [threat_actor [5]]))
+					local role = threat_actor [4]
+					thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
+					thisRow:SetRightText (ChuntMeter:ToK2 (threat_actor [6]) .. " (" .. _cstr ("%.1f", threat_actor [2]) .. "%)")
+					thisRow:SetValue (threat_actor [2])
+					
+					if (options.useplayercolor) then
+						thisRow:SetColor (_unpack (options.playercolor))
+					else
+						local r, g = ChuntMeter:percent_color (threat_actor [2], true)
+						thisRow:SetColor (r, g, 0, .3)
+					end
+				end
+			end
+		end
+		ChuntMeter.UpdateWindowTitle ("threater done")
+		
 	end
-	
+	i = 0
 	function ChuntMeter:Tick()
-		--ChuntMeter.UpdateWindowTitle('tick')
+		ChuntMeter.UpdateWindowTitle('tick ' .. _G.i)
+		_G.i = _G.i + 1
 		Threater()
 	end
 
 	function ChuntMeter:Start()
 		ChuntMeter:HideBars()
 		if (ChuntMeter.job_thread) then
+			ChuntMeter.UpdateWindowTitle('canceltimer start')
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
 		end
@@ -692,12 +699,14 @@ local function CreatePluginFrames (data)
 			end
 		end
 		
-		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
+		ChuntMeter.UpdateWindowTitle('timer scheduled start')
+		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
 		ChuntMeter.job_thread = job_thread
 	end
 
 	function ChuntMeter:Restart()
-		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
+		ChuntMeter.UpdateWindowTitle('timer scheduled restart')
+		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
 		ChuntMeter.job_thread = job_thread
 		ChuntMeter.UpdateWindowTitle ("restarted")
 	end
@@ -706,6 +715,7 @@ local function CreatePluginFrames (data)
 		--ChuntMeter:HideBars()
 
 		if (ChuntMeter.job_thread) then
+			ChuntMeter.UpdateWindowTitle('canceltimer end')
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
 			ChuntMeter.UpdateWindowTitle ("ended")
@@ -714,14 +724,30 @@ local function CreatePluginFrames (data)
 	
 	function ChuntMeter:Cancel()
 		ChuntMeter:HideBars()
-		ChuntMeter.UpdateWindowTitle ("canceled")
 		if (ChuntMeter.job_thread) then
+			ChuntMeter.UpdateWindowTitle('canceltimer cancel')
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
 		end
 	end
 	
 end
+
+
+-- ##############################################################
+-- ##############################################################
+-- ##############################################################
+-- ##############################################################
+--                STOP
+-- ##############################################################
+-- ##############################################################
+-- ##############################################################
+-- ##############################################################
+
+
+
+
+
 
 local build_options_panel = function()
 
@@ -783,7 +809,7 @@ function ChuntMeter:OnEvent (_, event, ...)
 	
 	--else
 	if (event == "PLAYER_REGEN_DISABLED") then
-		ChuntMeter.UpdateWindowTitle ("start 1")
+		ChuntMeter.UpdateWindowTitle ("start - chuntmeter event regen disable")
 		ChuntMeter:Start()
 		
 	elseif (event == "PLAYER_REGEN_ENABLED") then
@@ -807,8 +833,8 @@ function ChuntMeter:OnEvent (_, event, ...)
 				end
 				
 				--> Register needed events
-				_G._detalhes:RegisterEvent (ChuntMeter, "COMBAT_PLAYER_ENTER")
-				_G._detalhes:RegisterEvent (ChuntMeter, "COMBAT_PLAYER_LEAVE")
+				--_G._detalhes:RegisterEvent (ChuntMeter, "COMBAT_PLAYER_ENTER")
+				--_G._detalhes:RegisterEvent (ChuntMeter, "COMBAT_PLAYER_LEAVE")
 				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_ENDRESIZE")
 				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_SIZECHANGED")
 				_G._detalhes:RegisterEvent (ChuntMeter, "DETAILS_INSTANCE_STARTSTRETCH")
@@ -823,11 +849,11 @@ function ChuntMeter:OnEvent (_, event, ...)
 				ChuntMeter.saveddata = saveddata or {}
 				
 				ChuntMeter.saveddata.updatespeed = ChuntMeter.saveddata.updatespeed or 0.25
-				ChuntMeter.saveddata.animate = ChuntMeter.saveddata.animate or false
-				ChuntMeter.saveddata.showamount = ChuntMeter.saveddata.showamount or false
-				ChuntMeter.saveddata.useplayercolor = ChuntMeter.saveddata.useplayercolor or false
+				ChuntMeter.saveddata.animate = ChuntMeter.saveddata.animate or true
+				ChuntMeter.saveddata.showamount = ChuntMeter.saveddata.showamount or true
+				ChuntMeter.saveddata.useplayercolor = ChuntMeter.saveddata.useplayercolor or true
 				ChuntMeter.saveddata.playercolor = ChuntMeter.saveddata.playercolor or {1, 1, 1}
-				ChuntMeter.saveddata.useclasscolors = ChuntMeter.saveddata.useclasscolors or false
+				ChuntMeter.saveddata.useclasscolors = ChuntMeter.saveddata.useclasscolors or true
 
 				ChuntMeter.options = ChuntMeter.saveddata
 
