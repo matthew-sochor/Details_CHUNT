@@ -467,7 +467,6 @@ local function CreatePluginFrames (data)
 		if (me) then
 			
 			
-			local topThreat = ChuntMeter.player_list_indexes [1]
 			--local aggro = topThreat [6] * (CheckInteractDistance ("target", 3) and 1.1 or 1.3)
 			--local combat = Details:GetCurrentCombat()
 			--local combat_time = combat:GetCombatTime()
@@ -482,7 +481,7 @@ local function CreatePluginFrames (data)
 			--message(combat_time)
 			pullRow:SetLeftText ("G.R.U.M.P.H. score")
 			--local realPercent = _math_floor (aggro / max (topThreat [6], 0.01) * 100)
-			pullRow:SetRightText ("Total: " .. topThreat[2]) --
+			pullRow:SetRightText ("Total: " .. "???") --
 			--pullRow.SetRightText(_player_targets)
 			pullRow:SetValue (100)
 			
@@ -504,6 +503,7 @@ local function CreatePluginFrames (data)
 		end
 		
 		--ChuntMeter.UpdateWindowTitle ("show rows")
+		local top_chunt = ChuntMeter.player_list_indexes [1]
 		for index = 2, #ChuntMeter.ShownRows do
 			local thisRow = ChuntMeter.ShownRows [index]
 			local healer_table = ChuntMeter.player_list_indexes [index-1]
@@ -515,17 +515,22 @@ local function CreatePluginFrames (data)
 					
 					thisRow:SetLeftText (ChuntMeter:GetOnlyName (healer_table [1]))
 					
-					local oldPct = thisRow:GetValue() or 0
-					local pct = healer_table [2]
+					local old_chunt_score = thisRow:GetValue() or 0
+					local new_chunt_score = healer_table [2]
 					
 					thisRow:SetRightText ("C.H.U.N.T.: " .. healer_table [2])
 
 					--do healthbar animation ~animation ~healthbar
-					thisRow.CurrentPercentMax = 100
-					thisRow.AnimationStart = oldPct
-					thisRow.AnimationEnd = pct
+					thisRow.CurrentPercentMax = top_chunt [2]
+					thisRow.AnimationStart = old_chunt_score
+					thisRow.AnimationEnd = new_chunt_score
 
-					thisRow:SetValue (oldPct)
+					thisRow:SetValue (old_chunt_score)
+					if new_chunt_score > 0 then
+						thisRow:SetColor (0, 1, 0)
+					else
+						thisRow:SetColor (1, 0, 0)
+					end
 					
 					thisRow.IsAnimating = true
 					
@@ -538,24 +543,24 @@ local function CreatePluginFrames (data)
 					--if no animations
 					--thisRow:SetValue (pct)
 					
-					if (options.useplayercolor and healer_table [1] == player) then
-						thisRow:SetColor (_unpack (options.playercolor))
-						
-					elseif (options.useclasscolors) then
-						local color = RAID_CLASS_COLORS [healer_table [5]]
-						if (color) then
-							thisRow:SetColor (color.r, color.g, color.b)
-						else
-							thisRow:SetColor (1, 1, 1, 1)
-						end
-					else
-						if (index == 2) then
-							thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
-						else
-							local r, g = ChuntMeter:percent_color (pct, true)
-							thisRow:SetColor (r, g, 0, 1)
-						end
-					end
+					--if (options.useplayercolor and healer_table [1] == player) then
+					--	thisRow:SetColor (_unpack (options.playercolor))
+					--	
+					--elseif (options.useclasscolors) then
+					--	local color = RAID_CLASS_COLORS [healer_table [5]]
+					--	if (color) then
+					--		thisRow:SetColor (color.r, color.g, color.b)
+					--	else
+					--		thisRow:SetColor (1, 1, 1, 1)
+					--	end
+					--else
+					--	if (index == 2) then
+					--		thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
+					--	else
+					--		local r, g = ChuntMeter:percent_color (pct, true)
+					--		thisRow:SetColor (r, g, 0, 1)
+					--	end
+					--end
 					
 					if (not thisRow.statusbar:IsShown()) then
 						thisRow:Show()
