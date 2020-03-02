@@ -49,6 +49,20 @@ ChuntMeter:SetPluginDescription ("Small tool for track the C.H.U.N.T. score for 
 
 local _
 
+function table.deepcopy(orig)
+    local orig_type = type(orig)
+    local copy
+    if orig_type == 'table' then
+        copy = {}
+        for orig_key, orig_value in pairs(orig) do
+            copy[orig_key] = orig_value
+        end
+    else -- number, string, boolean, etc
+        copy = orig
+    end
+    return copy
+  end
+
 local function CreatePluginFrames (data)
 	
 	--> catch Details! main object
@@ -171,14 +185,62 @@ local function CreatePluginFrames (data)
 		return 1500
 	end
 
-	function ChuntMeter:CalculateChuntScore()
-		return 100
+
+	function ChuntMeter:CalculateChuntScore(player_heals, healer_table)
+
+		local incremental_modified_heal = 0
+		local target_overheal = 0
+		local target_heal = 0
+		for target, total_heal in pairs(player_heals.targets) do
+			--ChuntMeter.UpdateWindowTitle (target .. heal)
+			
+			if player_heals.targets_overheal[target] ~= nil then
+				if healer_table [7][target] ~= nil then
+					target_overheal = (player_heals.targets_overheal[target] - healer_table [7][target])
+				else
+					target_overheal = player_heals.targets_overheal[target]
+				end
+			else
+				target_overheal = 0
+			end
+			if healer_table [6][target] ~= nil then
+				target_heal = (total_heal - healer_table [6][target]) - target_overheal
+				--incremental_heal = incremental_heal + (actual_heal - healer_table [6][target])
+				--ChuntMeter.UpdateWindowTitle ("not nil" .. incremental_heal)
+				--local targetHealth = UnitHealth(target)
+				--local targetHealthMax = UnitHealthMax(target)
+			else
+				target_heal = total_heal - target_overheal
+
+				--incremental_heal = incremental_heal + actual_heal
+				--ChuntMeter.UpdateWindowTitle ("nil" .. incremental_heal)
+			end
+					
+			--incremental_heal = incremental_heal + target_heal
+			--incremental_overheal = incremental_overheal + target_overheal
+			--ChuntMeter.UpdateWindowTitle('incremental heal: ' .. incremental_heal .. ' = ' .. targetHealthMax)
+			
+			local target_health = UnitHealth(healer_table [8])
+			local target_health_max = UnitHealthMax(healer_table [8])
+			local start_ratio = (target_health - target_heal)/target_health_max
+			local end_ratio = target_health / target_health_max
+			local overheal_ratio = (target_health_max + target_overheal)/target_health_max
+			local positive_heals = 100*(end_ratio - start_ratio)
+			local negative_heals = 100*(overheal_ratio - 1)
+			ChuntMeter.UpdateWindowTitle('pos_heal: ' .. positive_heals .. ' neg_heal: ' .. negative_heals)
+			
+			incremental_modified_heal = incremental_modified_heal + positive_heals - negative_heals
+			
+		end
+		
+		healer_table [2] = healer_table [2] + incremental_modified_heal
+		
 	end
 
 	function ChuntMeter:UpdateHeals(player_name)
-		local threat_table_index = ChuntMeter.player_list_hash [player_name]
-		local threat_table = ChuntMeter.player_list_indexes [threat_table_index]
-		if (not threat_table) then
+		local healer_table_index = ChuntMeter.player_list_hash [player_name]
+		local healer_table = ChuntMeter.player_list_indexes [healer_table_index]
+		if (not healer_table) then
 			--> some one joined the group while the player are in combat
 			ChuntMeter.UpdateWindowTitle ("start updateheals no threat table")
 			ChuntMeter:Start()
@@ -186,17 +248,13 @@ local function CreatePluginFrames (data)
 		end
 		local combat = Details:GetCurrentCombat()
 		player_heals = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, player_name)
-		if (player_heals) then
-			threat_table [2] = player_heals.total
-			threat_table [3] = true
-			threat_table [6] = player_heals.targets
-			threat_table [7] = player_heals.targets_overheal
 
-		else
-			threat_table [2] = 0
-			threat_table [3] = false
-			threat_table [6] = {}
-			threat_table [7] = {}
+		if (player_heals) then
+			ChuntMeter:CalculateChuntScore(player_heals, healer_table)
+			healer_table [3] = true
+			-- Store prev targets and prev targets_overheal
+			healer_table [6] = table.deepcopy(player_heals.targets)
+			healer_table [7] = table.deepcopy(player_heals.targets_overheal)
 		end
 
 	end
@@ -376,7 +434,7 @@ local function CreatePluginFrames (data)
 		end
 	end
 
-	local Threater = function()
+	local GetHealTick = function()
 
 		local options = ChuntMeter.options
 
@@ -403,7 +461,6 @@ local function CreatePluginFrames (data)
 		end
 		
 		local lastIndex = 0
-		local shownMe = false
 		
 		local pullRow = ChuntMeter.ShownRows [1]
 		local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
@@ -440,31 +497,30 @@ local function CreatePluginFrames (data)
 			
 			pullRow:Show()
 		else
-			ChuntMeter.UpdateWindowTitle ("if not me")
+			--ChuntMeter.UpdateWindowTitle ("if not me")
 			if (pullRow) then
 				pullRow:Hide()
 			end
 		end
 		
-		ChuntMeter.UpdateWindowTitle ("show rows")
+		--ChuntMeter.UpdateWindowTitle ("show rows")
 		for index = 2, #ChuntMeter.ShownRows do
 			local thisRow = ChuntMeter.ShownRows [index]
-			local threat_actor = ChuntMeter.player_list_indexes [index-1]
+			local healer_table = ChuntMeter.player_list_indexes [index-1]
 			
-			if (threat_actor) then
-				local role = threat_actor [4]
-				thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
-				
-				local targetHealth = UnitHealth("player")
-				local targetHealthMax = UnitHealthMax("player")
-				thisRow:SetLeftText (ChuntMeter:GetOnlyName (threat_actor [1]))
-				
-				local oldPct = thisRow:GetValue() or 0
-				local pct = threat_actor [2]
-				
-				thisRow:SetRightText ("Chunt: " .. targetHealth .. "/" .. targetHealthMax)
+			if (healer_table) then
+				if healer_table [3] then
+					local role = healer_table [4]
+					thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
+					
+					thisRow:SetLeftText (ChuntMeter:GetOnlyName (healer_table [1]))
+					
+					local oldPct = thisRow:GetValue() or 0
+					local pct = healer_table [2]
+					
+					thisRow:SetRightText ("C.H.U.N.T.: " .. healer_table [2])
 
-				--do healthbar animation ~animation ~healthbar
+					--do healthbar animation ~animation ~healthbar
 					thisRow.CurrentPercentMax = 100
 					thisRow.AnimationStart = oldPct
 					thisRow.AnimationEnd = pct
@@ -479,71 +535,47 @@ local function CreatePluginFrames (data)
 						thisRow.AnimateFunc = ChuntMeter.AnimateLeftWithAccel
 					end
 
-				--if no animations
-				--thisRow:SetValue (pct)
-				
-				if (options.useplayercolor and threat_actor [1] == player) then
-					thisRow:SetColor (_unpack (options.playercolor))
+					--if no animations
+					--thisRow:SetValue (pct)
 					
-				elseif (options.useclasscolors) then
-					local color = RAID_CLASS_COLORS [threat_actor [5]]
-					if (color) then
-						thisRow:SetColor (color.r, color.g, color.b)
+					if (options.useplayercolor and healer_table [1] == player) then
+						thisRow:SetColor (_unpack (options.playercolor))
+						
+					elseif (options.useclasscolors) then
+						local color = RAID_CLASS_COLORS [healer_table [5]]
+						if (color) then
+							thisRow:SetColor (color.r, color.g, color.b)
+						else
+							thisRow:SetColor (1, 1, 1, 1)
+						end
 					else
-						thisRow:SetColor (1, 1, 1, 1)
+						if (index == 2) then
+							thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
+						else
+							local r, g = ChuntMeter:percent_color (pct, true)
+							thisRow:SetColor (r, g, 0, 1)
+						end
+					end
+					
+					if (not thisRow.statusbar:IsShown()) then
+						thisRow:Show()
 					end
 				else
-					if (index == 2) then
-						thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
-					else
-						local r, g = ChuntMeter:percent_color (pct, true)
-						thisRow:SetColor (r, g, 0, 1)
-					end
-				end
-				
-				if (not thisRow.statusbar:IsShown()) then
-					thisRow:Show()
-				end
-				if (threat_actor [1] == player) then
-					shownMe = true
+					thisRow:Hide()
 				end
 			else
 				thisRow:Hide()
 			end
 		end
 		
-		ChuntMeter.UpdateWindowTitle ("rows shown now")
-		if (not shownMe) then
-			ChuntMeter.UpdateWindowTitle ("if not shownme")
-			--> show my self into last bar
-			local threat_actor = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
-			if (threat_actor) then
-				if (threat_actor [2] and threat_actor [2] > 0.1) then
-					local thisRow = ChuntMeter.ShownRows [#ChuntMeter.ShownRows]
-					thisRow:SetLeftText (player)
-					--thisRow.textleft:SetTextColor (unpack (RAID_CLASS_COLORS [threat_actor [5]]))
-					local role = threat_actor [4]
-					thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
-					thisRow:SetRightText (ChuntMeter:ToK2 (threat_actor [6]) .. " (" .. _cstr ("%.1f", threat_actor [2]) .. "%)")
-					thisRow:SetValue (threat_actor [2])
-					
-					if (options.useplayercolor) then
-						thisRow:SetColor (_unpack (options.playercolor))
-					else
-						local r, g = ChuntMeter:percent_color (threat_actor [2], true)
-						thisRow:SetColor (r, g, 0, .3)
-					end
-				end
-			end
-		end
-		ChuntMeter.UpdateWindowTitle ("threater done")
+		--ChuntMeter.UpdateWindowTitle ("GetHealTick done")
 		
 	end
 	i = 0
 	function ChuntMeter:Tick()
 		ChuntMeter.UpdateWindowTitle('tick ' .. _G.i)
 		_G.i = _G.i + 1
-		Threater()
+		GetHealTick()
 	end
 
 	function ChuntMeter:Start()
@@ -560,10 +592,11 @@ local function CreatePluginFrames (data)
 		--> pre build player list
 		if (_IsInRaid()) then
 			for i = 1, _GetNumGroupMembers(), 1 do
-				local thisplayer_name = GetUnitName ("raid"..i, true)
-				local role = _UnitGroupRolesAssigned ("raid"..i)
+				local player_id = "raid"..i
+				local thisplayer_name = GetUnitName (player_id, true)
+				local role = _UnitGroupRolesAssigned (player_id)
 				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, {}, {}}
+				local t = {thisplayer_name, 0, false, role, class, {}, {}, player_id}
 				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 			end
@@ -572,17 +605,19 @@ local function CreatePluginFrames (data)
 
 		elseif (_IsInGroup()) then
 			for i = 1, _GetNumGroupMembers()-1, 1 do
-				local thisplayer_name = GetUnitName ("party"..i, true)
-				local role = _UnitGroupRolesAssigned ("party"..i)
+				local player_id = "party"..i
+				local thisplayer_name = GetUnitName (player_id, true)
+				local role = _UnitGroupRolesAssigned (player_id)
 				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, {}, {}}
+				local t = {thisplayer_name, 0, false, role, class, {}, {}, player_id}
 				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 			end
+
 			local thisplayer_name = GetUnitName ("player", true)
 			local role = _UnitGroupRolesAssigned ("player")
 			local _, class = UnitClass (thisplayer_name)
-			local t = {thisplayer_name, 0, false, role, class, {}, {}}
+			local t = {thisplayer_name, 0, false, role, class, {}, {}, "player"}
 			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 
@@ -591,7 +626,7 @@ local function CreatePluginFrames (data)
 			local thisplayer_name = GetUnitName ("player", true)
 			local role = _UnitGroupRolesAssigned ("player")
 			local _, class = UnitClass (thisplayer_name)
-			local t = {thisplayer_name, 0, false, role, class, {}, {}}
+			local t = {thisplayer_name, 0, false, role, class, {}, {}, "player"}
 			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
 			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
 			
