@@ -119,12 +119,10 @@ local function CreatePluginFrames (data)
 				if (not ChuntMeter.initialized) then
 					return
 				end
-				ChuntMeter.UpdateWindowTitle ("start from details event - show")
 				ChuntMeter:Start()
 			end
 		
 		elseif (event == "COMBAT_PLAYER_ENTER") then
-			ChuntMeter.UpdateWindowTitle ("start from details event - combat player enter")
 			ChuntMeter:Start()
 		
 		elseif (event == "DETAILS_INSTANCE_ENDRESIZE" or event == "DETAILS_INSTANCE_SIZECHANGED") then
@@ -194,7 +192,6 @@ local function CreatePluginFrames (data)
 		local target_overheal = 0
 		local target_heal = 0
 		for target, total_heal in pairs(player_heals.targets) do
-			--ChuntMeter.UpdateWindowTitle (target .. heal)
 			
 			if player_heals.targets_overheal[target] ~= nil then
 				if healer_table [7][target] ~= nil then
@@ -207,21 +204,10 @@ local function CreatePluginFrames (data)
 			end
 			if healer_table [6][target] ~= nil then
 				target_heal = (total_heal - healer_table [6][target]) - target_overheal
-				--incremental_heal = incremental_heal + (actual_heal - healer_table [6][target])
-				--ChuntMeter.UpdateWindowTitle ("not nil" .. incremental_heal)
-				--local targetHealth = UnitHealth(target)
-				--local targetHealthMax = UnitHealthMax(target)
 			else
 				target_heal = total_heal - target_overheal
-
-				--incremental_heal = incremental_heal + actual_heal
-				--ChuntMeter.UpdateWindowTitle ("nil" .. incremental_heal)
 			end
 					
-			--incremental_heal = incremental_heal + target_heal
-			--incremental_overheal = incremental_overheal + target_overheal
-			--ChuntMeter.UpdateWindowTitle('incremental heal: ' .. incremental_heal .. ' = ' .. targetHealthMax)
-			
 			local target_health = UnitHealth(healer_table [8])
 			local target_health_max = UnitHealthMax(healer_table [8])
 			if target_health_max == 0 then
@@ -232,7 +218,6 @@ local function CreatePluginFrames (data)
 			local overheal_ratio = (target_health_max + target_overheal)/target_health_max
 			local positive_heals = 100*(end_ratio - start_ratio)
 			local negative_heals = 100*(overheal_ratio - 1)
-			ChuntMeter.UpdateWindowTitle('pos_heal: ' .. positive_heals .. ' neg_heal: ' .. negative_heals)
 			
 			incremental_modified_heal = incremental_modified_heal + positive_heals - negative_heals
 			
@@ -247,7 +232,6 @@ local function CreatePluginFrames (data)
 		local healer_table = ChuntMeter.player_list_indexes [healer_table_index]
 		if (not healer_table) then
 			--> some one joined the group while the player are in combat
-			ChuntMeter.UpdateWindowTitle ("start updateheals no threat table")
 			ChuntMeter:Start()
 			return
 		end
@@ -444,7 +428,6 @@ local function CreatePluginFrames (data)
 		local options = ChuntMeter.options
 
 		if (_IsInRaid()) then
-			ChuntMeter.UpdateWindowTitle ("in raid")
 			for i = 1, _GetNumGroupMembers(), 1 do
 				local raid_player_name = GetUnitName ("raid"..i, true)
 				ChuntMeter:UpdateHeals(raid_player_name)
@@ -471,43 +454,20 @@ local function CreatePluginFrames (data)
 		local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
 		if (me) then
 			
-			
-			--local aggro = topThreat [6] * (CheckInteractDistance ("target", 3) and 1.1 or 1.3)
-			--local combat = Details:GetCurrentCombat()
-			--local combat_time = combat:GetCombatTime()
-			--local thisplayer = combat:GetActor (_G.DETAILS_ATTRIBUTE_HEAL, "Chunt")
-
-			--local totalHeal = thisplayer.total
-			--local totalOverHeal = thisplayer.totalover
-			--local _player_targets = ""
-			--for k, v in ipairs(player.spells) do
-			--	_player_targets = _player_targets .. "hi" -- .. k .. ":" .. v .. "; "
-			--end
-			--message(combat_time)
 			pullRow:SetLeftText ("G.R.U.M.P.H. score")
-			--local realPercent = _math_floor (aggro / max (topThreat [6], 0.01) * 100)
-			pullRow:SetRightText ("Total: " .. "???") --
-			--pullRow.SetRightText(_player_targets)
+			pullRow:SetRightText ("Total: " .. "???") 
 			pullRow:SetValue (100)
 			
-			--local myPercentToAggro = myThreat / aggro * 100
-			
-			--local r, g = ChuntMeter:percent_color (myPercentToAggro)
-			--local r, g = myPercentToAggro / 100, (100-myPercentToAggro) / 100
-			--pullRow:SetColor (r, g, 0)
 			pullRow._icon:SetTexture ([[Interface\PVPFrame\Icon-Combat]])
-			--pullRow._icon:SetVertexColor (r, g, 0)
 			pullRow._icon:SetTexCoord (0, 1, 0, 1)
 			
 			pullRow:Show()
 		else
-			--ChuntMeter.UpdateWindowTitle ("if not me")
 			if (pullRow) then
 				pullRow:Hide()
 			end
 		end
 		
-		--ChuntMeter.UpdateWindowTitle ("show rows")
 		local top_chunt = ChuntMeter.player_list_indexes [1]
 		for index = 2, #ChuntMeter.ShownRows do
 			local thisRow = ChuntMeter.ShownRows [index]
@@ -544,28 +504,6 @@ local function CreatePluginFrames (data)
 					else
 						thisRow.AnimateFunc = ChuntMeter.AnimateLeftWithAccel
 					end
-
-					--if no animations
-					--thisRow:SetValue (pct)
-					
-					--if (options.useplayercolor and healer_table [1] == player) then
-					--	thisRow:SetColor (_unpack (options.playercolor))
-					--	
-					--elseif (options.useclasscolors) then
-					--	local color = RAID_CLASS_COLORS [healer_table [5]]
-					--	if (color) then
-					--		thisRow:SetColor (color.r, color.g, color.b)
-					--	else
-					--		thisRow:SetColor (1, 1, 1, 1)
-					--	end
-					--else
-					--	if (index == 2) then
-					--		thisRow:SetColor (pct*0.01, _math_abs (pct-100)*0.01, 0, 1)
-					--	else
-					--		local r, g = ChuntMeter:percent_color (pct, true)
-					--		thisRow:SetColor (r, g, 0, 1)
-					--	end
-					--end
 					
 					if (not thisRow.statusbar:IsShown()) then
 						thisRow:Show()
@@ -576,15 +514,10 @@ local function CreatePluginFrames (data)
 			else
 				thisRow:Hide()
 			end
-		end
-		
-		--ChuntMeter.UpdateWindowTitle ("GetHealTick done")
-		
+		end	
 	end
-	i = 0
+	
 	function ChuntMeter:Tick()
-		ChuntMeter.UpdateWindowTitle('tick ' .. _G.i)
-		_G.i = _G.i + 1
 		GetHealTick()
 	end
 
@@ -595,7 +528,6 @@ local function CreatePluginFrames (data)
 			ChuntMeter.job_thread = job_thread
 		else
 			if (ChuntMeter.job_thread) then
-				ChuntMeter.UpdateWindowTitle('canceltimer start')
 				ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 				ChuntMeter.job_thread = nil
 			end
@@ -646,7 +578,6 @@ local function CreatePluginFrames (data)
 				
 			end
 			
-			ChuntMeter.UpdateWindowTitle('timer scheduled start')
 			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
 			ChuntMeter.job_thread = job_thread
 			ChuntMeter.started = true
@@ -658,10 +589,8 @@ local function CreatePluginFrames (data)
 		--ChuntMeter:HideBars()
 
 		if (ChuntMeter.job_thread) then
-			ChuntMeter.UpdateWindowTitle('canceltimer end')
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
-			ChuntMeter.UpdateWindowTitle ("ended")
 		end
 	end
 	
@@ -669,28 +598,12 @@ local function CreatePluginFrames (data)
 		ChuntMeter:HideBars()
 		ChuntMeter.started = false
 		if (ChuntMeter.job_thread) then
-			ChuntMeter.UpdateWindowTitle('canceltimer cancel')
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 			ChuntMeter.job_thread = nil
 		end
 	end
 	
 end
-
-
--- ##############################################################
--- ##############################################################
--- ##############################################################
--- ##############################################################
---                STOP
--- ##############################################################
--- ##############################################################
--- ##############################################################
--- ##############################################################
-
-
-
-
 
 
 local build_options_panel = function()
@@ -753,7 +666,6 @@ function ChuntMeter:OnEvent (_, event, ...)
 	
 	--else
 	if (event == "PLAYER_REGEN_DISABLED") then
-		ChuntMeter.UpdateWindowTitle ("start - chuntmeter event regen disable")
 		ChuntMeter:Start()
 		
 	elseif (event == "PLAYER_REGEN_ENABLED") then
