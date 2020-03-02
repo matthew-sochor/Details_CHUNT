@@ -157,6 +157,8 @@ local function CreatePluginFrames (data)
 			ChuntMeterFrame:RegisterEvent ("PLAYER_TARGET_CHANGED")
 			ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_DISABLED")
 			ChuntMeterFrame:RegisterEvent ("PLAYER_REGEN_ENABLED")
+		elseif (event == "DETAILS_DATA_RESET") or (event == "DETAILS_DATA_SEGMENTREMOVED") then
+			ChuntMeter:Cancel()
 		end
 	end
 	
@@ -222,6 +224,9 @@ local function CreatePluginFrames (data)
 			
 			local target_health = UnitHealth(healer_table [8])
 			local target_health_max = UnitHealthMax(healer_table [8])
+			if target_health_max == 0 then
+				target_health_max = 3000
+			end
 			local start_ratio = (target_health - target_heal)/target_health_max
 			local end_ratio = target_health / target_health_max
 			local overheal_ratio = (target_health_max + target_overheal)/target_health_max
@@ -515,21 +520,21 @@ local function CreatePluginFrames (data)
 					
 					thisRow:SetLeftText (ChuntMeter:GetOnlyName (healer_table [1]))
 					
+					thisRow.CurrentPercentMax = _math_abs (top_chunt [2])
 					local old_chunt_score = thisRow:GetValue() or 0
-					local new_chunt_score = healer_table [2]
+					local new_chunt_score = _math_abs (healer_table [2] / top_chunt[2])
 					
-					thisRow:SetRightText ("C.H.U.N.T.: " .. healer_table [2])
+					thisRow:SetRightText ("C.H.U.N.T.: " .. _math_floor (healer_table [2]))
 
 					--do healthbar animation ~animation ~healthbar
-					thisRow.CurrentPercentMax = top_chunt [2]
 					thisRow.AnimationStart = old_chunt_score
-					thisRow.AnimationEnd = new_chunt_score
+					thisRow.AnimationEnd = new_chunt_score*100
 
-					thisRow:SetValue (old_chunt_score)
-					if new_chunt_score > 0 then
-						thisRow:SetColor (0, 1, 0)
+					thisRow:SetValue (new_chunt_score*100)
+					if healer_table [2] > 0 then
+						thisRow:SetColor (0, 0.5 * new_chunt_score + 0.5, 0)
 					else
-						thisRow:SetColor (1, 0, 0)
+						thisRow:SetColor (0.5 * new_chunt_score + 0.5, 0, 0)
 					end
 					
 					thisRow.IsAnimating = true
@@ -584,70 +589,70 @@ local function CreatePluginFrames (data)
 	end
 
 	function ChuntMeter:Start()
-		ChuntMeter:HideBars()
-		if (ChuntMeter.job_thread) then
-			ChuntMeter.UpdateWindowTitle('canceltimer start')
-			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
-			ChuntMeter.job_thread = nil
-		end
-		
-		ChuntMeter.player_list_indexes = {}
-		ChuntMeter.player_list_hash = {}
-		
-		--> pre build player list
-		if (_IsInRaid()) then
-			for i = 1, _GetNumGroupMembers(), 1 do
-				local player_id = "raid"..i
-				local thisplayer_name = GetUnitName (player_id, true)
-				local role = _UnitGroupRolesAssigned (player_id)
-				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, {}, {}, player_id}
-				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
-			end
+		if ChuntMeter.started then
 
-			
-
-		elseif (_IsInGroup()) then
-			for i = 1, _GetNumGroupMembers()-1, 1 do
-				local player_id = "party"..i
-				local thisplayer_name = GetUnitName (player_id, true)
-				local role = _UnitGroupRolesAssigned (player_id)
-				local _, class = UnitClass (thisplayer_name)
-				local t = {thisplayer_name, 0, false, role, class, {}, {}, player_id}
-				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
-			end
-
-			local thisplayer_name = GetUnitName ("player", true)
-			local role = _UnitGroupRolesAssigned ("player")
-			local _, class = UnitClass (thisplayer_name)
-			local t = {thisplayer_name, 0, false, role, class, {}, {}, "player"}
-			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
-
-			
+			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
+			ChuntMeter.job_thread = job_thread
 		else
-			local thisplayer_name = GetUnitName ("player", true)
-			local role = _UnitGroupRolesAssigned ("player")
-			local _, class = UnitClass (thisplayer_name)
-			local t = {thisplayer_name, 0, false, role, class, {}, {}, "player"}
-			ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
-			ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+			if (ChuntMeter.job_thread) then
+				ChuntMeter.UpdateWindowTitle('canceltimer start')
+				ChuntMeter:CancelTimer (ChuntMeter.job_thread)
+				ChuntMeter.job_thread = nil
+			end
+			ChuntMeter:HideBars()
+			ChuntMeter.player_list_indexes = {}
+			ChuntMeter.player_list_hash = {}
 			
+			--> pre build player list
+			if (_IsInRaid()) then
+				for i = 1, _GetNumGroupMembers(), 1 do
+					local player_id = "raid"..i
+					local thisplayer_name = GetUnitName (player_id, true)
+					local role = _UnitGroupRolesAssigned (player_id)
+					local _, class = UnitClass (thisplayer_name)
+					local t = {thisplayer_name, 0, false, role, class, {}, {}, player_id}
+					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+					ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+				end
+
+				
+
+			elseif (_IsInGroup()) then
+				for i = 1, _GetNumGroupMembers()-1, 1 do
+					local player_id = "party"..i
+					local thisplayer_name = GetUnitName (player_id, true)
+					local role = _UnitGroupRolesAssigned (player_id)
+					local _, class = UnitClass (thisplayer_name)
+					local t = {thisplayer_name, 0, false, role, class, {}, {}, player_id}
+					ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+					ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+				end
+
+				local thisplayer_name = GetUnitName ("player", true)
+				local role = _UnitGroupRolesAssigned ("player")
+				local _, class = UnitClass (thisplayer_name)
+				local t = {thisplayer_name, 0, false, role, class, {}, {}, "player"}
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+
+				
+			else
+				local thisplayer_name = GetUnitName ("player", true)
+				local role = _UnitGroupRolesAssigned ("player")
+				local _, class = UnitClass (thisplayer_name)
+				local t = {thisplayer_name, 0, false, role, class, {}, {}, "player"}
+				ChuntMeter.player_list_indexes [#ChuntMeter.player_list_indexes+1] = t
+				ChuntMeter.player_list_hash [thisplayer_name] = #ChuntMeter.player_list_indexes
+				
+			end
+			
+			ChuntMeter.UpdateWindowTitle('timer scheduled start')
+			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
+			ChuntMeter.job_thread = job_thread
+			ChuntMeter.started = true
 		end
-		
-		ChuntMeter.UpdateWindowTitle('timer scheduled start')
-		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
-		ChuntMeter.job_thread = job_thread
 	end
 
-	function ChuntMeter:Restart()
-		ChuntMeter.UpdateWindowTitle('timer scheduled restart')
-		local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
-		ChuntMeter.job_thread = job_thread
-		ChuntMeter.UpdateWindowTitle ("restarted")
-	end
 	
 	function ChuntMeter:End()
 		--ChuntMeter:HideBars()
@@ -662,6 +667,7 @@ local function CreatePluginFrames (data)
 	
 	function ChuntMeter:Cancel()
 		ChuntMeter:HideBars()
+		ChuntMeter.started = false
 		if (ChuntMeter.job_thread) then
 			ChuntMeter.UpdateWindowTitle('canceltimer cancel')
 			ChuntMeter:CancelTimer (ChuntMeter.job_thread)
