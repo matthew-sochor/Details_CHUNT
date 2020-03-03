@@ -240,7 +240,7 @@ local function CreatePluginFrames (data)
 
 		if (player_heals) then
 			ChuntMeter:CalculateChuntScore(player_heals, healer_table)
-			healer_table [3] = true
+			healer_table [3] = (healer_table [4] == "HEALER") or (healer_table [4] == "NONE")
 			-- Store prev targets and prev targets_overheal
 			healer_table [6] = table.deepcopy(player_heals.targets)
 			healer_table [7] = table.deepcopy(player_heals.targets_overheal)
@@ -484,7 +484,7 @@ local function CreatePluginFrames (data)
 					local old_chunt_score = thisRow:GetValue() or 0
 					local new_chunt_score = _math_abs (healer_table [2] / top_chunt[2])
 					
-					thisRow:SetRightText ("C.H.U.N.T.: " .. _math_floor (healer_table [2]))
+					thisRow:SetRightText (_math_floor (healer_table [2]) .. "%")
 
 					--do healthbar animation ~animation ~healthbar
 					thisRow.AnimationStart = old_chunt_score
