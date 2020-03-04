@@ -184,15 +184,22 @@ local function CreatePluginFrames (data)
 
 	function ChuntMeter:CalculateGrumphScore()
 
-		local ratio = 6/7
+		local grumph_ratio = 6/7
 		local net_group_health = 0
 		if (_IsInRaid()) then
 			prefix = "raid"
 		elseif (_IsInGroup()) then
 			prefix = "group"
 		else
-			return false
-		
+			local health = UnitHealth("player")
+			local health_max = UnitHealthMax("player")
+			if health / health_max > grumph_ratio then
+				ChuntMeter.grumph_score = ChuntMeter.grumph_score + ChuntMeter.options.updatespeed
+			else
+				ChuntMeter.grumph_score = ChuntMeter.grumph_score - ChuntMeter.options.updatespeed
+			end
+			return true
+		end
 		for i = 1, _GetNumGroupMembers(), 1 do
 			local player_name = GetUnitName (prefix .. i, true)
 
@@ -200,7 +207,7 @@ local function CreatePluginFrames (data)
 			local table = ChuntMeter.player_list_indexes [table_index]
 			local health = UnitHealth(table [8])
 			local health_max = UnitHealthMax(table [8])
-			net_group_health = net_group_health + health / health_max - ratio
+			net_group_health = net_group_health + health / health_max - grumph_ratio
 		end
 		if net_group_health > 0 then
 			ChuntMeter.grumph_score = ChuntMeter.grumph_score + ChuntMeter.options.updatespeed
@@ -742,7 +749,6 @@ function ChuntMeter:OnEvent (_, event, ...)
 
 				ChuntMeter.options = ChuntMeter.saveddata
 
-				ChuntMeter.saveddata.updatespeed = 0.20
 				--ChuntMeter.saveddata.animate = true
 				
 				--> Register slash commands
