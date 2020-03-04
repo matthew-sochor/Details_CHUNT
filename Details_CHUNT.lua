@@ -488,19 +488,19 @@ local function CreatePluginFrames (data)
 		local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
 		if (me) then
 
-			thisRow.CurrentPercentMax = 10
 
 			ChuntMeter:CalculateGrumphScore()
 			pullRow:SetLeftText ("G.R.U.M.P.H. score")
 			pullRow:SetRightText ("Total: " .. _math_floor (ChuntMeter.grumph_score))
+			pullRow.CurrentPercentMax = 10
 			pullRow:SetValue (_math_abs (ChuntMeter.grumph_score))
 			
 			pullRow._icon:SetTexture ([[Interface\PVPFrame\Icon-Combat]])
 			pullRow._icon:SetTexCoord (0, 1, 0, 1)
 			if ChuntMeter.grumph_score > 0 then
-				thisRow:SetColor (0, ChuntMeter.grumph_score / 20 + 0.5, 0)
+				pullRow:SetColor (0, ChuntMeter.grumph_score / 20 + 0.5, 0)
 			else
-				thisRow:SetColor (_math_abs (ChuntMeter.grumph_score / 20) + 0.5, 0, 0)
+				pullRow:SetColor (_math_abs (ChuntMeter.grumph_score / 20) + 0.5, 0, 0)
 			end
 			
 			pullRow:Show()
