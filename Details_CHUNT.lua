@@ -181,8 +181,33 @@ local function CreatePluginFrames (data)
 		end
 	end
 
+
 	function ChuntMeter:CalculateGrumphScore()
-		return 1500
+
+		local ratio = 6/7
+		local net_group_health = 0
+		if (_IsInRaid()) then
+			prefix = "raid"
+		elseif (_IsInGroup()) then
+			prefix = "group"
+		else
+			return false
+		
+		for i = 1, _GetNumGroupMembers(), 1 do
+			local player_name = GetUnitName (prefix .. i, true)
+
+			local table_index = ChuntMeter.player_list_hash [player_name]
+			local table = ChuntMeter.player_list_indexes [table_index]
+			local health = UnitHealth(table [8])
+			local health_max = UnitHealthMax(table [8])
+			net_group_health = net_group_health + health / health_max - ratio
+		end
+		if net_group_health > 0 then
+			ChuntMeter.grumph_score = ChuntMeter.grumph_score + ChuntMeter.options.updatespeed
+		else
+			ChuntMeter.grumph_score = ChuntMeter.grumph_score - ChuntMeter.options.updatespeed
+		end
+		return true
 	end
 
 
@@ -208,8 +233,10 @@ local function CreatePluginFrames (data)
 				target_heal = total_heal - target_overheal
 			end
 					
-			local target_health = UnitHealth(healer_table [8])
-			local target_health_max = UnitHealthMax(healer_table [8])
+			local target_table_index = ChuntMeter.player_list_hash [target]
+			local target_table = ChuntMeter.player_list_indexes [target_table_index]
+			local target_health = UnitHealth(target_table [8])
+			local target_health_max = UnitHealthMax(target_table [8])
 			if target_health_max == 0 then
 				target_health_max = 3000
 			end
@@ -453,9 +480,9 @@ local function CreatePluginFrames (data)
 		local pullRow = ChuntMeter.ShownRows [1]
 		local me = ChuntMeter.player_list_indexes [ ChuntMeter.player_list_hash [player] ]
 		if (me) then
-			
+			ChuntMeter:CalculateGrumphScore()
 			pullRow:SetLeftText ("G.R.U.M.P.H. score")
-			pullRow:SetRightText ("Total: " .. "???") 
+			pullRow:SetRightText ("Total: " .. ChuntMeter.grumph_score) 
 			pullRow:SetValue (100)
 			
 			pullRow._icon:SetTexture ([[Interface\PVPFrame\Icon-Combat]])
@@ -524,9 +551,11 @@ local function CreatePluginFrames (data)
 	function ChuntMeter:Start()
 		if ChuntMeter.started then
 
-			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
+			ChuntMeter.grumph_score = 0
+			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
 			ChuntMeter.job_thread = job_thread
 		else
+			ChuntMeter.grumph_score = 0
 			if (ChuntMeter.job_thread) then
 				ChuntMeter:CancelTimer (ChuntMeter.job_thread)
 				ChuntMeter.job_thread = nil
@@ -578,7 +607,7 @@ local function CreatePluginFrames (data)
 				
 			end
 			
-			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", 1)--ChuntMeter.options.updatespeed)
+			local job_thread = ChuntMeter:ScheduleRepeatingTimer ("Tick", ChuntMeter.options.updatespeed)
 			ChuntMeter.job_thread = job_thread
 			ChuntMeter.started = true
 		end
