@@ -256,7 +256,7 @@ local function CreatePluginFrames (data)
 			local positive_heals = 100*(end_ratio - start_ratio)
 			local negative_heals = 100*(overheal_ratio - 1)
 			
-			incremental_modified_heal = incremental_modified_heal + positive_heals - 1.5*negative_heals
+			incremental_modified_heal = incremental_modified_heal + positive_heals - negative_heals
 			
 		end
 		
@@ -514,6 +514,11 @@ local function CreatePluginFrames (data)
 		end
 		
 		local top_chunt = ChuntMeter.player_list_indexes [1]
+		if (_IsInRaid()) or (_IsInGroup()) then
+			local bottom_chunt = ChuntMeter.player_list_indexes [_GetNumGroupMembers()]
+		else
+			local bottom_chunt = top_chunt
+		end
 		local show_index = 2
 		for index = 2, #ChuntMeter.ShownRows do
 			local thisRow = ChuntMeter.ShownRows [show_index]
@@ -527,7 +532,11 @@ local function CreatePluginFrames (data)
 					
 					thisRow:SetLeftText (ChuntMeter:GetOnlyName (healer_table [1]))
 					
-					thisRow.CurrentPercentMax = _math_abs (top_chunt [2])
+					if healer_table[2] > 0 then
+						thisRow.CurrentPercentMax = _math_abs (top_chunt [2])
+					else
+						thisRow.CurrentPercentMax = _math_abs (bottom_chunt [2])
+					end
 					local old_chunt_score = thisRow:GetValue() or 0
 					local new_chunt_score = _math_abs (healer_table [2] / top_chunt[2])
 					
