@@ -193,6 +193,9 @@ local function CreatePluginFrames (data)
 		else
 			local health = UnitHealth("player")
 			local health_max = UnitHealthMax("player")
+			if health_max == 0 then
+				health_max = 3000
+			end
 			if health / health_max > grumph_ratio then
 				ChuntMeter.grumph_score = ChuntMeter.grumph_score + ChuntMeter.options.updatespeed
 			else
@@ -253,7 +256,7 @@ local function CreatePluginFrames (data)
 			local positive_heals = 100*(end_ratio - start_ratio)
 			local negative_heals = 100*(overheal_ratio - 1)
 			
-			incremental_modified_heal = incremental_modified_heal + positive_heals - negative_heals
+			incremental_modified_heal = incremental_modified_heal + positive_heals - 1.5*negative_heals
 			
 		end
 		
@@ -511,13 +514,15 @@ local function CreatePluginFrames (data)
 		end
 		
 		local top_chunt = ChuntMeter.player_list_indexes [1]
+		local show_index = 2
 		for index = 2, #ChuntMeter.ShownRows do
-			local thisRow = ChuntMeter.ShownRows [index]
+			local thisRow = ChuntMeter.ShownRows [show_index]
 			local healer_table = ChuntMeter.player_list_indexes [index-1]
 			
 			if (healer_table) then
 				if healer_table [3] then
 					local role = healer_table [4]
+					show_index = show_index + 1
 					thisRow._icon:SetTexCoord (_unpack (RoleIconCoord [role]))
 					
 					thisRow:SetLeftText (ChuntMeter:GetOnlyName (healer_table [1]))
